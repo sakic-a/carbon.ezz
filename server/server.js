@@ -1,0 +1,310 @@
+const express = require("express");
+const cors = require("cors");
+const db = require("./db");
+const bcrypt = require("bcryptjs");
+const app = express();
+const PORT = process.env.PORT || 5000;
+app.use(cors());
+app.use(express.json());
+app.get("/api/products", async (req, res) => {
+  try {
+    const query = `
+            SELECT p.*, 
+            COALESCE(json_agg(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL), '[]') as gallery
+            FROM products p
+            LEFT JOIN product_images pi ON p.id = pi.product_id
+            GROUP BY p.id
+            ORDER BY p.id ASC
+        `;
+    const result = await db.query(query);
+    const products = result.rows.map((p) => ({
+      ...p,
+      nameBs: p.name_bs,
+    }));
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.get("/api/products/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = `
+            SELECT p.*, 
+            COALESCE(json_agg(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL), '[]') as gallery
+            FROM products p
+            LEFT JOIN product_images pi ON p.id = pi.product_id
+            WHERE p.id = $1
+            GROUP BY p.id
+        `;
+    const result = await db.query(query, [id]);
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Product not found" });
+    }
+    const p = result.rows[0];
+    const product = { ...p, nameBs: p.name_bs };
+    res.json(product);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (result.rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials" });
+    }
+    const user = result.rows[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials" });
+    }
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const userCheck = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (userCheck.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "User already exists" });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const newUser = await db.query(
+      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
+      [name, email, hashedPassword, "customer"],
+    );
+    res.json({
+      success: true,
+      user: {
+        id: newUser.rows[0].id,
+        name: newUser.rows[0].name,
+        email: newUser.rows[0].email,
+        role: "customer",
+      },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.post("/api/orders", async (req, res) => {
+  const { userEmail, total, shipping, items } = req.body;
+  try {
+    await db.query("BEGIN");
+    const orderRes = await db.query(
+      `INSERT INTO orders (user_email, total, shipping_name, shipping_address, shipping_city, shipping_zip, shipping_country, shipping_phone) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [
+        userEmail,
+        total,
+        shipping.name,
+        shipping.address,
+        shipping.city,
+        shipping.zip,
+        shipping.country,
+        shipping.phone,
+      ],
+    );
+    const orderId = orderRes.rows[0].id;
+    for (const item of items) {
+      await db.query(
+        `INSERT INTO order_items (order_id, product_name, price, quantity, image) 
+                 VALUES ($1, $2, $3, $4, $5)`,
+        [orderId, item.name, item.price, item.quantity, item.image],
+      );
+    }
+    await db.query("COMMIT");
+    res.json({ success: true, orderId });
+  } catch (err) {
+    await db.query("ROLLBACK");
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.get("/api/admin/orders", async (req, res) => {
+  try {
+    const ordersRes = await db.query(
+      "SELECT * FROM orders ORDER BY created_at DESC",
+    );
+    const orders = ordersRes.rows;
+    for (let order of orders) {
+      const itemsRes = await db.query(
+        "SELECT * FROM order_items WHERE order_id = $1",
+        [order.id],
+      );
+      order.items = itemsRes.rows.map((i) => ({
+        name: i.product_name,
+        price: i.price,
+        quantity: i.quantity,
+        image: i.image,
+      }));
+      order.user = order.user_email;
+      order.shipping = {
+        name: order.shipping_name,
+        address: order.shipping_address,
+        city: order.shipping_city,
+        phone: order.shipping_phone,
+      };
+    }
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.patch("/api/orders/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const result = await db.query(
+      "UPDATE orders SET status = $1 WHERE id = $2 RETURNING *",
+      [status, id],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Order not found" });
+    }
+    res.json({ success: true, order: result.rows[0] });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.post("/api/products", async (req, res) => {
+  const { name, nameBs, price, category, image, description, gallery } =
+    req.body;
+  try {
+    await db.query("BEGIN");
+    const productRes = await db.query(
+      "INSERT INTO products (name, name_bs, price, category, image, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [name, nameBs, price, category, image, description],
+    );
+    const newProduct = productRes.rows[0];
+    if (gallery && gallery.length > 0) {
+      for (const imgUrl of gallery) {
+        await db.query(
+          "INSERT INTO product_images (product_id, image_url) VALUES ($1, $2)",
+          [newProduct.id, imgUrl],
+        );
+      }
+    }
+    await db.query("COMMIT");
+    newProduct.gallery = gallery || [];
+    res.json(newProduct);
+  } catch (err) {
+    await db.query("ROLLBACK");
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.delete("/api/products/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query("DELETE FROM products WHERE id = $1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.put("/api/products/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, nameBs, price, category, image, description, gallery } =
+    req.body;
+  try {
+    await db.query("BEGIN");
+    const productRes = await db.query(
+      "UPDATE products SET name = $1, name_bs = $2, price = $3, category = $4, image = $5, description = $6 WHERE id = $7 RETURNING *",
+      [name, nameBs, price, category, image, description, id],
+    );
+    if (productRes.rows.length === 0) {
+      await db.query("ROLLBACK");
+      return res.status(404).json({ success: false, error: "Product not found" });
+    }
+    const updatedProduct = productRes.rows[0];
+    await db.query("DELETE FROM product_images WHERE product_id = $1", [id]);
+    if (gallery && gallery.length > 0) {
+      for (const imgUrl of gallery) {
+        await db.query(
+          "INSERT INTO product_images (product_id, image_url) VALUES ($1, $2)",
+          [updatedProduct.id, imgUrl],
+        );
+      }
+    }
+    await db.query("COMMIT");
+    updatedProduct.gallery = gallery || [];
+    res.json(updatedProduct);
+  } catch (err) {
+    await db.query("ROLLBACK");
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.post("/api/contact", async (req, res) => {
+  const { name, email, message, phone } = req.body;
+  try {
+    await db.query(
+      "INSERT INTO messages (name, email, message, phone) VALUES ($1, $2, $3, $4)",
+      [name, email, message, phone],
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.get("/api/admin/messages", async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT * FROM messages ORDER BY created_at DESC",
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.patch("/api/messages/:id/reply", async (req, res) => {
+  const { id } = req.params;
+  const { reply } = req.body;
+  try {
+    const result = await db.query(
+      "UPDATE messages SET reply = $1 WHERE id = $2 RETURNING *",
+      [reply, id],
+    );
+    res.json({ success: true, message: result.rows[0] });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
