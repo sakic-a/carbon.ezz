@@ -1,4 +1,7 @@
 const express = require("express");
+
+const jwt = require("jsonwebtoken"); 
+
 const cors = require("cors");
 const db = require("./db");
 const bcrypt = require("bcryptjs");
@@ -6,6 +9,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token)
+    return res.status(401).json({ success: false, error: "No token provided" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err)
+      return res.status(403).json({ success: false, error: "Invalid or expired token" });
+    req.user = user;
+    next();
+  });
+}
+
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== "admin")
+    return res.status(403).json({ success: false, error: "Admin access required" });
+  next();
+}
+
 app.get("/api/products", async (req, res) => {
   try {
     const query = `
@@ -70,8 +95,17 @@ app.post("/api/auth/login", async (req, res) => {
         .status(401)
         .json({ success: false, error: "Invalid credentials" });
     }
+
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     res.json({
       success: true,
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -101,8 +135,14 @@ app.post("/api/auth/register", async (req, res) => {
       "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
       [name, email, hashedPassword, "customer"],
     );
+    const token = jwt.sign(
+      { id: newUser.rows[0].id, email: newUser.rows[0].email, role: "customer" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
     res.json({
       success: true,
+      token,
       user: {
         id: newUser.rows[0].id,
         name: newUser.rows[0].name,
@@ -149,7 +189,7 @@ app.post("/api/orders", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.get("/api/admin/orders", async (req, res) => {
+app.get("/api/admin/orders", authenticateToken, requireAdmin, async (req, res) => { 
   try {
     const ordersRes = await db.query(
       "SELECT * FROM orders ORDER BY created_at DESC",
@@ -180,7 +220,7 @@ app.get("/api/admin/orders", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.patch("/api/orders/:id/status", async (req, res) => {
+app.patch("/api/orders/:id/status", authenticateToken, requireAdmin, async (req, res) => { 
   const { id } = req.params;
   const { status } = req.body;
   try {
@@ -197,7 +237,7 @@ app.patch("/api/orders/:id/status", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.post("/api/products", async (req, res) => {
+app.post("/api/products", authenticateToken, requireAdmin, async (req, res) => { 
   const { name, nameBs, price, category, image, description, gallery } =
     req.body;
   try {
@@ -224,7 +264,7 @@ app.post("/api/products", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.delete("/api/products/:id", async (req, res) => {
+app.delete("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => { 
   const { id } = req.params;
   try {
     await db.query("DELETE FROM products WHERE id = $1", [id]);
@@ -234,7 +274,7 @@ app.delete("/api/products/:id", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.put("/api/products/:id", async (req, res) => {
+app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => { 
   const { id } = req.params;
   const { name, nameBs, price, category, image, description, gallery } =
     req.body;
@@ -280,7 +320,7 @@ app.post("/api/contact", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.get("/api/admin/messages", async (req, res) => {
+app.get("/api/admin/messages", authenticateToken, requireAdmin, async (req, res) => { 
   try {
     const result = await db.query(
       "SELECT * FROM messages ORDER BY created_at DESC",
@@ -291,7 +331,7 @@ app.get("/api/admin/messages", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-app.patch("/api/messages/:id/reply", async (req, res) => {
+app.patch("/api/messages/:id/reply", authenticateToken, requireAdmin, async (req, res) => { 
   const { id } = req.params;
   const { reply } = req.body;
   try {
