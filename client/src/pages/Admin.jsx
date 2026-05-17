@@ -1,3 +1,5 @@
+const getToken = () => localStorage.getItem("token");
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -25,13 +27,21 @@ export default function Admin() {
         if (!storedUser || storedUser.role !== 'admin') {
             navigate('/login');
         }
-        fetch('http://localhost:5000/api/admin/orders')
+        fetch('http://localhost:5000/api/admin/orders' ,{
+            headers: {
+                "Authorization": `Bearer ${getToken()}`,
+            }
+        })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch('http://localhost:5000/api/admin/messages')
+        fetch('http://localhost:5000/api/admin/messages', {
+            headers: {
+                 "Authorization": `Bearer ${getToken()}`,
+            }
+        })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setMessages(data);
@@ -42,7 +52,10 @@ export default function Admin() {
         try {
             await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`, 
+                },
                 body: JSON.stringify({ status })
             });
             setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
@@ -84,7 +97,10 @@ export default function Admin() {
         try {
             const res = await fetch(`http://localhost:5000/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json' ,
+                    'Authorization': `Bearer ${getToken()}`, 
+                },
                 body: JSON.stringify({ reply: replyText })
             });
             const data = await res.json();

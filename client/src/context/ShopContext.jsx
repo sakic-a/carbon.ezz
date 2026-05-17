@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
 const ShopContext = createContext();
+
+const getToken = () => localStorage.getItem("token"); 
+
 export function ShopProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [productsList, setProductsList] = useState([]);
@@ -37,7 +40,10 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch("http://localhost:5000/api/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json" ,
+           "Authorization": `Bearer ${getToken()}`, 
+        },
         body: JSON.stringify(product),
       });
       const newProduct = await response.json();
@@ -50,7 +56,10 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch(`http://localhost:5000/api/products/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json" ,
+          "Authorization": `Bearer ${getToken()}`, 
+        },
         body: JSON.stringify(productData),
       });
       const updatedProduct = await response.json();
@@ -63,6 +72,9 @@ export function ShopProvider({ children }) {
     try {
       await fetch(`http://localhost:5000/api/products/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${getToken()}`,
+        },
       });
       setProductsList((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {

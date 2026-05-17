@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.error || data.message || "Login failed");
+      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
       return { success: true };
@@ -35,6 +36,7 @@ export function AuthProvider({ children }) {
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.error || data.message || "Registration failed");
+      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
       return { success: true };
@@ -43,6 +45,7 @@ export function AuthProvider({ children }) {
     }
   };
   const logout = () => {
+    localStorage.removeItem("token"); 
     localStorage.removeItem("user");
     setUser(null);
   };
