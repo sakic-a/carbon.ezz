@@ -1,5 +1,3 @@
-const getToken = () => localStorage.getItem("token");
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -8,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2 } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 export default function Admin() {
-    const { user } = useAuth();
+    const { user, getToken } = useAuth();
     const { t } = useLanguage();
     const { products, addProduct, updateProduct, deleteProduct } = useShop();
     const navigate = useNavigate();
@@ -27,7 +25,7 @@ export default function Admin() {
         if (!storedUser || storedUser.role !== 'admin') {
             navigate('/login');
         }
-        fetch('http://localhost:5000/api/admin/orders' ,{
+        fetch('http://localhost:5001/api/admin/orders', {
             headers: {
                 "Authorization": `Bearer ${getToken()}`,
             }
@@ -37,7 +35,7 @@ export default function Admin() {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch('http://localhost:5000/api/admin/messages', {
+        fetch('http://localhost:5001/api/admin/messages', {
             headers: {
                  "Authorization": `Bearer ${getToken()}`,
             }
@@ -50,7 +48,7 @@ export default function Admin() {
     }, [navigate]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
-            await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+            await fetch(`http://localhost:5001/api/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -95,7 +93,7 @@ export default function Admin() {
     };
     const handleReply = async (msgId, replyText) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/messages/${msgId}/reply`, {
+            const res = await fetch(`http://localhost:5001/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json' ,

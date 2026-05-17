@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 const ShopContext = createContext();
 
-const getToken = () => localStorage.getItem("token"); 
-
 export function ShopProvider({ children }) {
+  const { getToken } = useAuth();
   const [cart, setCart] = useState([]);
   const [productsList, setProductsList] = useState([]);
   useEffect(() => {
@@ -88,12 +88,8 @@ export function ShopProvider({ children }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userEmail: user.email,
-          total: cart.reduce(
-            (acc, item) => acc + item.price * item.quantity,
-            0,
-          ),
           shipping: shippingDetails,
-          items: cart,
+          items: cart.map((item) => ({ id: item.id, quantity: item.quantity })),
         }),
       });
       if (!response.ok) throw new Error("Order failed");
