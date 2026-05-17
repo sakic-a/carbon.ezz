@@ -156,15 +156,32 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 app.post("/api/orders", async (req, res) => {
-  const { userEmail, total, shipping, items } = req.body;
+  const { userEmail, shipping, items } = req.body;
   try {
+    // Resolve prices from DB — never trust client-submitted prices
+    const resolvedItems = [];
+    let serverTotal = 0;
+    for (const item of items) {
+      const quantity = parseInt(item.quantity, 10);
+      if (!item.id || isNaN(quantity) || quantity < 1) {
+        return res.status(400).json({ success: false, error: "Invalid item" });
+      }
+      const productRes = await db.query("SELECT * FROM products WHERE id = $1", [item.id]);
+      if (productRes.rows.length === 0) {
+        return res.status(400).json({ success: false, error: `Product not found: ${item.id}` });
+      }
+      const product = productRes.rows[0];
+      serverTotal += parseFloat(product.price) * quantity;
+      resolvedItems.push({ name: product.name, price: product.price, quantity, image: product.image });
+    }
+
     await db.query("BEGIN");
     const orderRes = await db.query(
-      `INSERT INTO orders (user_email, total, shipping_name, shipping_address, shipping_city, shipping_zip, shipping_country, shipping_phone) 
+      `INSERT INTO orders (user_email, total, shipping_name, shipping_address, shipping_city, shipping_zip, shipping_country, shipping_phone)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [
         userEmail,
-        total,
+        serverTotal,
         shipping.name,
         shipping.address,
         shipping.city,
@@ -174,9 +191,9 @@ app.post("/api/orders", async (req, res) => {
       ],
     );
     const orderId = orderRes.rows[0].id;
-    for (const item of items) {
+    for (const item of resolvedItems) {
       await db.query(
-        `INSERT INTO order_items (order_id, product_name, price, quantity, image) 
+        `INSERT INTO order_items (order_id, product_name, price, quantity, image)
                  VALUES ($1, $2, $3, $4, $5)`,
         [orderId, item.name, item.price, item.quantity, item.image],
       );
