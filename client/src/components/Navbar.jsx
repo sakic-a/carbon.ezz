@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Menu, X, Globe, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, X, Globe, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { useShop } from "../context/ShopContext";
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { lang, toggleLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
   const { cart } = useShop();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
   return (
     <nav className="sticky top-0 z-50 h-[70px] flex items-center bg-white shadow-sm">
       <div className="container mx-auto px-4 flex justify-between items-center w-full">
@@ -19,6 +21,7 @@ export default function Navbar() {
         >
           Carbon<span className="text-primary">.ez</span>
         </Link>
+
         <div className="hidden md:flex gap-8 font-medium text-secondary">
           <Link to="/" className="hover:text-primary transition-colors">
             {t("nav", "home")}
@@ -41,6 +44,7 @@ export default function Navbar() {
             </Link>
           )}
         </div>
+
         <div className="hidden md:flex items-center gap-6">
           <button
             onClick={toggleLanguage}
@@ -52,6 +56,7 @@ export default function Navbar() {
               {lang.toUpperCase()}
             </span>
           </button>
+
           <Link
             to="/cart"
             className="relative flex items-center text-secondary hover:text-primary transition-colors"
@@ -63,26 +68,27 @@ export default function Navbar() {
               </span>
             )}
           </Link>
-          {user ? (
-            <div className="flex items-center gap-2 font-semibold text-sm">
-              <span>{user.name}</span>
-              <button
-                onClick={logout}
-                className="flex items-center text-secondary hover:text-primary transition-colors"
-                title={t("nav", "logout")}
-              >
-                <LogOut size={20} />
-              </button>
-            </div>
-          ) : (
-            <Link
-              to="/login"
-              className="bg-primary text-black px-4 py-1.5 rounded text-sm hover:bg-yellow-400 transition-colors"
+
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-1.5 text-secondary hover:text-primary transition-colors font-semibold text-sm"
+            title="My Account"
+          >
+            <User size={20} />
+            <span>{user ? user.name : t("nav", "myAccount")}</span>
+          </Link>
+
+          {user && (
+            <button
+              onClick={logout}
+              className="flex items-center text-secondary hover:text-primary transition-colors"
+              title={t("nav", "logout")}
             >
-              {t("nav", "login")}
-            </Link>
+              <LogOut size={20} />
+            </button>
           )}
         </div>
+
         <button
           className="md:hidden text-secondary"
           onClick={() => setIsOpen(!isOpen)}
@@ -90,6 +96,7 @@ export default function Navbar() {
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
+
       {isOpen && (
         <div className="md:hidden absolute top-[70px] left-0 w-full bg-white shadow-md border-t border-gray-100 flex flex-col p-5 gap-4">
           <Link
@@ -129,16 +136,15 @@ export default function Navbar() {
               {t("nav", "admin")}
             </Link>
           )}
+
           <div className="flex flex-col gap-3 mt-2">
             <button
-              onClick={() => {
-                toggleLanguage();
-                setIsOpen(false);
-              }}
+              onClick={() => { toggleLanguage(); setIsOpen(false); }}
               className="flex items-center gap-2 py-2"
             >
               <Globe size={18} /> Language: {lang.toUpperCase()}
             </button>
+
             <Link
               to="/cart"
               onClick={() => setIsOpen(false)}
@@ -146,24 +152,22 @@ export default function Navbar() {
             >
               <ShoppingCart size={18} /> Cart ({cartCount})
             </Link>
-            {user ? (
+
+            <Link
+              to="/dashboard"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 py-2 font-bold text-primary"
+            >
+              <User size={18} />
+              {user ? `My Account (${user.name})` : t("nav", "myAccount")}
+            </Link>
+            {user && (
               <button
-                onClick={() => {
-                  logout();
-                  setIsOpen(false);
-                }}
-                className="text-left font-bold py-2"
+                onClick={() => { logout(); setIsOpen(false); }}
+                className="text-left font-semibold py-2 text-secondary"
               >
-                Logout ({user.name})
+                Logout
               </button>
-            ) : (
-              <Link
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="bg-primary text-black text-center py-2 rounded"
-              >
-                Login
-              </Link>
             )}
           </div>
         </div>

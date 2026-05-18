@@ -308,3 +308,76 @@ app.patch("/api/messages/:id/reply", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+// ─────────────────────────────────────────────────────────────────────────────
+// PASTE THESE THREE ROUTE BLOCKS INTO server.js
+// Suggested placement: right before app.listen(PORT, ...)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 1. GET orders for a specific user (by email)
+app.get("/api/orders/user/:email", async (req, res) => {
+  const { email } = req.params;
+  try {
+    const ordersRes = await db.query(
+      "SELECT * FROM orders WHERE user_email = $1 ORDER BY created_at DESC",
+      [email]
+    );
+    const orders = ordersRes.rows;
+    for (let order of orders) {
+      const itemsRes = await db.query(
+        "SELECT * FROM order_items WHERE order_id = $1",
+        [order.id]
+      );
+      order.items = itemsRes.rows.map((i) => ({
+        name: i.product_name,
+        price: i.price,
+        quantity: i.quantity,
+        image: i.image,
+      }));
+    }
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// 2. GET messages/inquiries sent by a specific user (by email)
+app.get("/api/messages/user/:email", async (req, res) => {
+  const { email } = req.params;
+  try {
+    const result = await db.query(
+      "SELECT * FROM messages WHERE email = $1 ORDER BY created_at DESC",
+      [email]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// 3. POST change password (verifies current password first)
+app.post("/api/auth/change-password", async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+  try {
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    const user = result.rows[0];
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: "Incorrect current password" });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedNew = await bcrypt.hash(newPassword, salt);
+    await db.query("UPDATE users SET password = $1 WHERE email = $2", [
+      hashedNew,
+      email,
+    ]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
