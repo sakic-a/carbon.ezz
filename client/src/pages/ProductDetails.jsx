@@ -14,7 +14,7 @@ export default function ProductDetails() {
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState("");
   useEffect(() => {
-    fetch(`http://localhost:5000/api/products/${id}`)
+    fetch(`http://localhost:5001/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setProduct(data);
