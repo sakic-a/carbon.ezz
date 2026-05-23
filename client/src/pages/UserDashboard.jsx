@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import {
   ShoppingBag,
   MessageSquare,
@@ -19,25 +19,34 @@ import {
   EyeOff,
   Trash2,
   X,
-  User
+  User,
+  Search,
+  TrendingUp,
+  Star,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "http://localhost:5001/api";
 
 export default function UserDashboard() {
   const { user, logout } = useAuth();
   const { cart, removeFromCart } = useShop();
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState("orders");
+  const urlTab = searchParams.get("tab");
+  const orderSuccess = searchParams.get("success") === "1";
 
- 
+  const [activeTab, setActiveTab] = useState(urlTab || "orders");
+  const [showOrderSuccess, setShowOrderSuccess] = useState(orderSuccess);
+
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState(null);
-
   
+  const [orderFilter, setOrderFilter] = useState("all");
+  const [orderSearch, setOrderSearch] = useState("");
+
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [msgName, setMsgName] = useState(user?.name || "");
@@ -47,7 +56,6 @@ export default function UserDashboard() {
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState("");
 
- 
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -57,8 +65,7 @@ export default function UserDashboard() {
   const [pwSuccess, setPwSuccess] = useState("");
   const [pwError, setPwError] = useState("");
 
-  
-  useEffect(() => {
+  const fetchOrders = () => {
     if (!user) return;
     setOrdersLoading(true);
     fetch(`${API}/orders/user/${encodeURIComponent(user.email)}`)
@@ -68,6 +75,10 @@ export default function UserDashboard() {
         setOrdersLoading(false);
       })
       .catch(() => setOrdersLoading(false));
+  };
+
+  useEffect(() => {
+    fetchOrders();
   }, [user]);
 
   useEffect(() => {
@@ -81,6 +92,14 @@ export default function UserDashboard() {
       })
       .catch(() => setMessagesLoading(false));
   }, [user]);
+
+  // Auto-hide order success banner after 5s
+  useEffect(() => {
+    if (showOrderSuccess) {
+      const t = setTimeout(() => setShowOrderSuccess(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [showOrderSuccess]);
 
   if (!user) {
     return (
@@ -125,7 +144,6 @@ export default function UserDashboard() {
         setMsgSuccess(td("messageSent"));
         setMsgText("");
         setMsgPhone("");
-        
         const updated = await fetch(
           `${API}/messages/user/${encodeURIComponent(user.email)}`
         ).then((r) => r.json());
@@ -141,31 +159,19 @@ export default function UserDashboard() {
     e.preventDefault();
     setPwError("");
     setPwSuccess("");
-    if (newPw !== confirmPw) {
-      setPwError(td("pwMismatch"));
-      return;
-    }
-    if (newPw.length < 6) {
-      setPwError(td("pwTooShort"));
-      return;
-    }
+    if (newPw !== confirmPw) { setPwError(td("pwMismatch")); return; }
+    if (newPw.length < 6) { setPwError(td("pwTooShort")); return; }
     setPwLoading(true);
     try {
       const res = await fetch(`${API}/auth/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          currentPassword: currentPw,
-          newPassword: newPw,
-        }),
+        body: JSON.stringify({ email: user.email, currentPassword: currentPw, newPassword: newPw }),
       });
       const data = await res.json();
       if (res.ok) {
         setPwSuccess(td("pwSuccess"));
-        setCurrentPw("");
-        setNewPw("");
-        setConfirmPw("");
+        setCurrentPw(""); setNewPw(""); setConfirmPw("");
       } else {
         setPwError(data.error || td("pwError"));
       }
@@ -175,93 +181,61 @@ export default function UserDashboard() {
     setPwLoading(false);
   };
 
-  // ─── i18n helpers ────────────────────────────────────────────────
+  
   const dashTrans = {
     en: {
-      title: "My Account",
-      orders: "My Orders",
-      inquiries: "Inquiries",
-      cart: "Cart",
-      password: "Change Password",
-      noOrders: "You have no orders yet.",
-      orderDate: "Date",
-      orderTotal: "Total",
-      orderStatus: "Status",
-      orderItems: "Items",
-      viewDetails: "View Details",
-      hide: "Hide",
-      statusPending: "Pending",
-      statusProcessing: "Processing",
-      statusShipped: "Shipped",
-      statusDelivered: "Delivered",
-      sendMessage: "Send a Message",
-      yourMessages: "Your Inquiries",
+      title: "My Account", orders: "My Orders", inquiries: "Inquiries",
+      cart: "Cart", password: "Change Password", noOrders: "You have no orders yet.",
+      orderDate: "Date", orderTotal: "Total", orderStatus: "Status", orderItems: "Items",
+      viewDetails: "View Details", hide: "Hide",
+      statusPending: "Pending", statusProcessing: "Processing",
+      statusShipped: "Shipped", statusDelivered: "Delivered",
+      sendMessage: "Send a Message", yourMessages: "Your Inquiries",
       noMessages: "You haven't sent any messages yet.",
-      adminReply: "Reply from Carbon.ez:",
-      noReply: "Awaiting reply...",
-      name: "Full Name",
-      email: "Email",
-      phone: "Phone (optional)",
-      message: "Message",
-      send: "Send",
-      messageSent: "Message sent successfully!",
-      cartEmpty: "Your cart is empty.",
-      cartTotal: "Total",
-      goToCart: "Go to Checkout",
-      remove: "Remove",
-      currentPw: "Current Password",
-      newPw: "New Password",
-      confirmPw: "Confirm New Password",
-      changePw: "Update Password",
+      adminReply: "Reply from Carbon.ez:", noReply: "Awaiting reply...",
+      name: "Full Name", email: "Email", phone: "Phone (optional)", message: "Message",
+      send: "Send", messageSent: "Message sent successfully!",
+      cartEmpty: "Your cart is empty.", cartTotal: "Total",
+      goToCart: "Go to Checkout", remove: "Remove",
+      currentPw: "Current Password", newPw: "New Password",
+      confirmPw: "Confirm New Password", changePw: "Update Password",
       pwSuccess: "Password changed successfully!",
       pwError: "Failed to change password. Check your current password.",
-      pwMismatch: "New passwords do not match.",
-      pwTooShort: "Password must be at least 6 characters.",
-      logout: "Logout",
-      hello: "Hello",
+      pwMismatch: "New passwords do not match.", pwTooShort: "Password must be at least 6 characters.",
+      logout: "Logout", hello: "Hello",
+      orderSuccessBanner: "Your order was placed successfully!",
+      filterAll: "All", filterPending: "Pending", filterProcessing: "Processing",
+      filterShipped: "Shipped", filterDelivered: "Delivered",
+      searchOrders: "Search orders...", totalSpent: "Total Spent",
+      totalOrders: "Total Orders", memberSince: "Member since",
+      refresh: "Refresh Orders",
     },
     bs: {
-      title: "Moj Profil",
-      orders: "Moje Narudžbe",
-      inquiries: "Upiti",
-      cart: "Korpa",
-      password: "Promjena Šifre",
-      noOrders: "Nemate narudžbi.",
-      orderDate: "Datum",
-      orderTotal: "Ukupno",
-      orderStatus: "Status",
-      orderItems: "Artikli",
-      viewDetails: "Detalji",
-      hide: "Sakrij",
-      statusPending: "Na čekanju",
-      statusProcessing: "U obradi",
-      statusShipped: "Poslano",
-      statusDelivered: "Dostavljeno",
-      sendMessage: "Pošalji Poruku",
-      yourMessages: "Vaši Upiti",
+      title: "Moj Profil", orders: "Moje Narudžbe", inquiries: "Upiti",
+      cart: "Korpa", password: "Promjena Šifre", noOrders: "Nemate narudžbi.",
+      orderDate: "Datum", orderTotal: "Ukupno", orderStatus: "Status", orderItems: "Artikli",
+      viewDetails: "Detalji", hide: "Sakrij",
+      statusPending: "Na čekanju", statusProcessing: "U obradi",
+      statusShipped: "Poslano", statusDelivered: "Dostavljeno",
+      sendMessage: "Pošalji Poruku", yourMessages: "Vaši Upiti",
       noMessages: "Niste poslali nijedan upit.",
-      adminReply: "Odgovor Carbon.ez:",
-      noReply: "Čeka se odgovor...",
-      name: "Ime i Prezime",
-      email: "Email",
-      phone: "Telefon (opcionalno)",
-      message: "Poruka",
-      send: "Pošalji",
-      messageSent: "Poruka uspješno poslana!",
-      cartEmpty: "Vaša korpa je prazna.",
-      cartTotal: "Ukupno",
-      goToCart: "Idi na Plaćanje",
-      remove: "Ukloni",
-      currentPw: "Trenutna Šifra",
-      newPw: "Nova Šifra",
-      confirmPw: "Potvrdi Novu Šifru",
-      changePw: "Promijeni Šifru",
+      adminReply: "Odgovor Carbon.ez:", noReply: "Čeka se odgovor...",
+      name: "Ime i Prezime", email: "Email", phone: "Telefon (opcionalno)", message: "Poruka",
+      send: "Pošalji", messageSent: "Poruka uspješno poslana!",
+      cartEmpty: "Vaša korpa je prazna.", cartTotal: "Ukupno",
+      goToCart: "Idi na Plaćanje", remove: "Ukloni",
+      currentPw: "Trenutna Šifra", newPw: "Nova Šifra",
+      confirmPw: "Potvrdi Novu Šifru", changePw: "Promijeni Šifru",
       pwSuccess: "Šifra uspješno promijenjena!",
       pwError: "Greška. Provjerite trenutnu šifru.",
-      pwMismatch: "Nove šifre se ne podudaraju.",
-      pwTooShort: "Šifra mora imati najmanje 6 znakova.",
-      logout: "Odjava",
-      hello: "Zdravo",
+      pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati najmanje 6 znakova.",
+      logout: "Odjava", hello: "Zdravo",
+      orderSuccessBanner: "Vaša narudžba je uspješno primljena!",
+      filterAll: "Sve", filterPending: "Na čekanju", filterProcessing: "U obradi",
+      filterShipped: "Poslano", filterDelivered: "Dostavljeno",
+      searchOrders: "Pretraži narudžbe...", totalSpent: "Ukupno potrošeno",
+      totalOrders: "Ukupno narudžbi", memberSince: "Član od",
+      refresh: "Osvježi narudžbe",
     },
   };
 
@@ -287,13 +261,25 @@ export default function UserDashboard() {
 
   const statusLabel = (status) => {
     const map = {
-      pending: td("statusPending"),
-      processing: td("statusProcessing"),
-      shipped: td("statusShipped"),
-      delivered: td("statusDelivered"),
+      pending: td("statusPending"), processing: td("statusProcessing"),
+      shipped: td("statusShipped"), delivered: td("statusDelivered"),
     };
     return map[status] ?? status;
   };
+
+  const totalSpent = orders.reduce((acc, o) => acc + Number(o.total), 0);
+  const deliveredCount = orders.filter((o) => o.status === "delivered").length;
+
+  const filteredOrders = orders.filter((o) => {
+    const matchesStatus = orderFilter === "all" || o.status === orderFilter;
+    const matchesSearch =
+      orderSearch === "" ||
+      String(o.id).includes(orderSearch) ||
+      (o.items || []).some((i) =>
+        i.name.toLowerCase().includes(orderSearch.toLowerCase())
+      );
+    return matchesStatus && matchesSearch;
+  });
 
   const tabs = [
     { id: "orders", label: td("orders"), icon: ShoppingBag },
@@ -305,8 +291,20 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="container mx-auto px-4 max-w-5xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+
+        {showOrderSuccess && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 rounded-xl px-5 py-4 flex items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle size={20} className="text-green-600 flex-shrink-0" />
+              <span className="font-semibold text-sm">{td("orderSuccessBanner")}</span>
+            </div>
+            <button onClick={() => setShowOrderSuccess(false)} className="text-green-600 hover:text-green-800">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-extrabold text-black">
               {td("hello")},{" "}
@@ -322,7 +320,36 @@ export default function UserDashboard() {
           </button>
         </div>
 
-        {/* Tab Navigation */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <ShoppingBag size={20} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-black">{orders.length}</p>
+              <p className="text-xs text-gray-500">{td("totalOrders")}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <TrendingUp size={20} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-black">€{totalSpent.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">{td("totalSpent")}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Star size={20} className="text-blue-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-black">{deliveredCount}</p>
+              <p className="text-xs text-gray-500">{td("statusDelivered")}</p>
+            </div>
+          </div>
+        </div>
+
         <div className="flex gap-1 mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-1 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -350,18 +377,59 @@ export default function UserDashboard() {
 
         {activeTab === "orders" && (
           <div className="space-y-4">
+            {/* Filter & Search bar */}
+            {!ordersLoading && orders.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-3 mb-2">
+                <div className="relative flex-1">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder={td("searchOrders")}
+                    className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white"
+                  />
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {["all", "pending", "processing", "shipped", "delivered"].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setOrderFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        orderFilter === f
+                          ? "bg-primary text-black"
+                          : "bg-white border border-gray-200 text-gray-500 hover:border-primary"
+                      }`}
+                    >
+                      {td(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {ordersLoading ? (
               <div className="text-center py-16 text-gray-400">
                 <Package size={40} className="mx-auto mb-3 opacity-40" />
                 <p>Loading...</p>
               </div>
-            ) : orders.length === 0 ? (
+            ) : filteredOrders.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
                 <ShoppingBag size={48} className="mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500">{td("noOrders")}</p>
+                <p className="text-gray-500">
+                  {orders.length === 0 ? td("noOrders") : "No orders match your filter."}
+                </p>
+                {orders.length === 0 && (
+                  <Link
+                    to="/shop"
+                    className="mt-4 inline-block bg-primary text-black px-5 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition-colors"
+                  >
+                    {lang === "bs" ? "Idi u Trgovinu" : "Browse Shop"}
+                  </Link>
+                )}
               </div>
             ) : (
-              orders.map((order) => (
+              filteredOrders.map((order) => (
                 <div
                   key={order.id}
                   className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
@@ -376,9 +444,7 @@ export default function UserDashboard() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span
-                        className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor(order.status)}`}
-                      >
+                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor(order.status)}`}>
                         {statusIcon(order.status)}
                         {statusLabel(order.status)}
                       </span>
@@ -387,9 +453,7 @@ export default function UserDashboard() {
                       </span>
                       <button
                         onClick={() =>
-                          setExpandedOrder(
-                            expandedOrder === order.id ? null : order.id
-                          )
+                          setExpandedOrder(expandedOrder === order.id ? null : order.id)
                         }
                         className="flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
                       >
@@ -409,21 +473,12 @@ export default function UserDashboard() {
                       </p>
                       <div className="space-y-3">
                         {(order.items || []).map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-100"
-                          >
+                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-100">
                             {item.image && (
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-12 h-12 object-cover rounded"
-                              />
+                              <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-black truncate">
-                                {item.name}
-                              </p>
+                              <p className="font-semibold text-sm text-black truncate">{item.name}</p>
                               <p className="text-gray-500 text-xs">
                                 €{Number(item.price).toFixed(2)} × {item.quantity}
                               </p>
@@ -437,7 +492,7 @@ export default function UserDashboard() {
                       {order.shipping_address && (
                         <div className="mt-4 text-xs text-gray-500">
                           <span className="font-semibold text-gray-700">
-                            {lang === "bs" ? "Dostava:" : "Shipping:"}{" "}
+                            {lang === "bs" ? "Dostava: " : "Shipping: "}
                           </span>
                           {order.shipping_name}, {order.shipping_address},{" "}
                           {order.shipping_city} {order.shipping_zip},{" "}
@@ -449,13 +504,22 @@ export default function UserDashboard() {
                 </div>
               ))
             )}
+
+            {!ordersLoading && (
+              <div className="text-center pt-2">
+                <button
+                  onClick={fetchOrders}
+                  className="text-xs text-gray-400 hover:text-primary transition-colors underline"
+                >
+                  {td("refresh")}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── INQUIRIES TAB ─────────────────────────────────────── */}
         {activeTab === "inquiries" && (
           <div className="space-y-6">
-            {/* Send new message */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
               <h2 className="text-lg font-bold text-black mb-5 flex items-center gap-2">
                 <Send size={18} className="text-primary" />
@@ -469,9 +533,7 @@ export default function UserDashboard() {
               <form onSubmit={handleSendMessage} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {td("name")}
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{td("name")}</label>
                     <input
                       className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                       value={msgName}
@@ -480,9 +542,7 @@ export default function UserDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {td("email")}
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{td("email")}</label>
                     <input
                       type="email"
                       className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
@@ -493,9 +553,7 @@ export default function UserDashboard() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {td("phone")}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{td("phone")}</label>
                   <input
                     className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                     value={msgPhone}
@@ -504,9 +562,7 @@ export default function UserDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {td("message")}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{td("message")}</label>
                   <textarea
                     rows={4}
                     className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none"
@@ -526,7 +582,6 @@ export default function UserDashboard() {
               </form>
             </div>
 
-            {/* Existing messages / replies */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
               <h2 className="text-lg font-bold text-black mb-5 flex items-center gap-2">
                 <MessageSquare size={18} className="text-primary" />
@@ -539,35 +594,20 @@ export default function UserDashboard() {
               ) : (
                 <div className="space-y-4">
                   {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className="border border-gray-100 rounded-xl p-4 bg-gray-50"
-                    >
+                    <div key={msg.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm text-black font-medium leading-snug">
-                          {msg.message}
-                        </p>
+                        <p className="text-sm text-black font-medium leading-snug">{msg.message}</p>
                         <span className="text-xs text-gray-400 whitespace-nowrap">
                           {new Date(msg.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       {msg.phone && (
-                        <p className="text-xs text-gray-400 mb-2">
-                          📞 {msg.phone}
-                        </p>
+                        <p className="text-xs text-gray-400 mb-2">📞 {msg.phone}</p>
                       )}
-                      <div
-                        className={`mt-3 rounded-lg px-4 py-3 text-sm ${
-                          msg.reply
-                            ? "bg-primary/10 border border-primary/20"
-                            : "bg-gray-100 text-gray-400"
-                        }`}
-                      >
+                      <div className={`mt-3 rounded-lg px-4 py-3 text-sm ${msg.reply ? "bg-primary/10 border border-primary/20" : "bg-gray-100 text-gray-400"}`}>
                         {msg.reply ? (
                           <>
-                            <p className="font-semibold text-xs text-gray-600 mb-1">
-                              {td("adminReply")}
-                            </p>
+                            <p className="font-semibold text-xs text-gray-600 mb-1">{td("adminReply")}</p>
                             <p className="text-gray-800">{msg.reply}</p>
                           </>
                         ) : (
@@ -585,30 +625,28 @@ export default function UserDashboard() {
           </div>
         )}
 
+        {/* ── CART TAB ───────────────────────────────────────────── */}
         {activeTab === "cart" && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             {cart.length === 0 ? (
               <div className="text-center py-16">
                 <ShoppingCart size={48} className="mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500">{td("cartEmpty")}</p>
+                <p className="text-gray-500 mb-4">{td("cartEmpty")}</p>
+                <Link
+                  to="/shop"
+                  className="inline-block bg-primary text-black px-5 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition-colors"
+                >
+                  {lang === "bs" ? "Idi u Trgovinu" : "Browse Shop"}
+                </Link>
               </div>
             ) : (
               <>
                 <div className="divide-y divide-gray-100">
                   {cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-4 p-5"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                      />
+                    <div key={item.id} className="flex items-center gap-4 p-5">
+                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-black text-sm truncate">
-                          {item.name}
-                        </p>
+                        <p className="font-semibold text-black text-sm truncate">{item.name}</p>
                         <p className="text-gray-500 text-xs mt-0.5">
                           €{Number(item.price).toFixed(2)} × {item.quantity}
                         </p>
@@ -629,9 +667,7 @@ export default function UserDashboard() {
                 <div className="bg-gray-50 p-5 flex items-center justify-between border-t border-gray-100">
                   <div>
                     <p className="text-sm text-gray-500">{td("cartTotal")}</p>
-                    <p className="text-2xl font-extrabold text-black">
-                      €{cartTotal.toFixed(2)}
-                    </p>
+                    <p className="text-2xl font-extrabold text-black">€{cartTotal.toFixed(2)}</p>
                   </div>
                   <button
                     onClick={() => navigate("/cart")}
@@ -651,7 +687,6 @@ export default function UserDashboard() {
               <Lock size={18} className="text-primary" />
               {td("password")}
             </h2>
-
             {pwSuccess && (
               <div className="mb-4 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm flex items-center gap-2">
                 <CheckCircle size={16} /> {pwSuccess}
@@ -662,13 +697,9 @@ export default function UserDashboard() {
                 <AlertCircle size={16} /> {pwError}
               </div>
             )}
-
             <form onSubmit={handleChangePassword} className="space-y-4">
-              {/* Current password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {td("currentPw")}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{td("currentPw")}</label>
                 <div className="relative">
                   <input
                     type={showCurrentPw ? "text" : "password"}
@@ -677,21 +708,14 @@ export default function UserDashboard() {
                     onChange={(e) => setCurrentPw(e.target.value)}
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPw(!showCurrentPw)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showCurrentPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
-
-              {/* New password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {td("newPw")}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{td("newPw")}</label>
                 <div className="relative">
                   <input
                     type={showNewPw ? "text" : "password"}
@@ -700,21 +724,14 @@ export default function UserDashboard() {
                     onChange={(e) => setNewPw(e.target.value)}
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPw(!showNewPw)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" onClick={() => setShowNewPw(!showNewPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
-
-              {/* Confirm password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {td("confirmPw")}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{td("confirmPw")}</label>
                 <input
                   type="password"
                   className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
@@ -723,7 +740,6 @@ export default function UserDashboard() {
                   required
                 />
               </div>
-
               <button
                 type="submit"
                 disabled={pwLoading}
@@ -734,6 +750,7 @@ export default function UserDashboard() {
             </form>
           </div>
         )}
+
       </div>
     </div>
   );
