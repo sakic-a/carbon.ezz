@@ -50,6 +50,7 @@ export default function UserDashboard() {
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [msgText, setMsgText] = useState("");
+  const [msgPhone, setMsgPhone] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState("");
 
@@ -130,8 +131,8 @@ export default function UserDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: msgName,
-          email: msgEmail,
+          name: user.name,
+          email: user.email,
           phone: msgPhone,
           message: msgText,
         }),
@@ -503,16 +504,28 @@ export default function UserDashboard() {
               )}
               <form onSubmit={handleSendMessage} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{td("phone")}</label>
+                    <input
+                      type="tel"
+                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                      value={msgPhone}
+                      onChange={(e) => setMsgPhone(e.target.value)}
+                      placeholder={td("phone")}
+                    />
                   </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{td("message")}</label>
                   <textarea
                     rows={4}
+                    maxLength={500}
                     className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none"
                     value={msgText}
                     onChange={(e) => setMsgText(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-gray-400 text-right mt-1">{msgText.length}/500</p>
                 </div>
                 <button
                   type="submit"
@@ -539,7 +552,7 @@ export default function UserDashboard() {
                   {messages.map((msg) => (
                     <div key={msg.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm text-black font-medium leading-snug">{msg.message}</p>
+                        <p className="text-sm text-black font-medium leading-snug break-words">{msg.message}</p>
                         <span className="text-xs text-gray-400 whitespace-nowrap">
                           {new Date(msg.created_at).toLocaleDateString()}
                         </span>
@@ -551,7 +564,7 @@ export default function UserDashboard() {
                         {msg.reply ? (
                           <>
                             <p className="font-semibold text-xs text-gray-600 mb-1">{td("adminReply")}</p>
-                            <p className="text-gray-800">{msg.reply}</p>
+                            <p className="text-gray-800 break-words">{msg.reply}</p>
                           </>
                         ) : (
                           <p className="flex items-center gap-1.5 italic">

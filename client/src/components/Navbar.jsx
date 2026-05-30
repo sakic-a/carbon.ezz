@@ -69,14 +69,16 @@ export default function Navbar() {
             )}
           </Link>
 
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1.5 text-secondary hover:text-primary transition-colors font-semibold text-sm"
-            title="My Account"
-          >
-            <User size={20} />
-            <span>{user ? user.name : t("nav", "myAccount")}</span>
-          </Link>
+          {user?.role !== "admin" && (
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-1.5 text-secondary hover:text-primary transition-colors font-semibold text-sm"
+              title="My Account"
+            >
+              <User size={20} />
+              <span>{user ? user.name : t("nav", "myAccount")}</span>
+            </Link>
+          )}
 
           {user && (
             <button
@@ -153,14 +155,16 @@ export default function Navbar() {
               <ShoppingCart size={18} /> Cart ({cartCount})
             </Link>
 
-            <Link
-              to="/dashboard"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 py-2 font-bold text-primary"
-            >
-              <User size={18} />
-              {user ? `My Account (${user.name})` : t("nav", "myAccount")}
-            </Link>
+            {user?.role !== "admin" && (
+              <Link
+                to="/dashboard"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 py-2 font-bold text-primary"
+              >
+                <User size={18} />
+                {user ? `My Account (${user.name})` : t("nav", "myAccount")}
+              </Link>
+            )}
             {user && (
               <button
                 onClick={() => { logout(); setIsOpen(false); }}

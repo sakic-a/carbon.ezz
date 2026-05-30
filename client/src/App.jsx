@@ -10,6 +10,7 @@ import Gallery from "./pages/Gallery";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
+import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
 import UserDashboard from "./pages/UserDashboard";
 
@@ -26,6 +27,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/product/:id" element={<ProductDetails />} />
                   <Route path="/cart" element={<Cart />} />
+                  <Route path="/shop" element={<Shop />} />
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/login" element={<Login />} />
