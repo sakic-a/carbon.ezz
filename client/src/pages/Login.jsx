@@ -69,6 +69,11 @@ export default function Login() {
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
+                {name.length > 0 && !/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]{2,50}$/.test(name) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    • Only letters allowed, 2-50 characters
+                  </p>
+                )}
               </div>
             )}
             <div>
@@ -83,6 +88,11 @@ export default function Login() {
                 placeholder="email@example.com"
                 required
               />
+              {isRegister && email.length > 0 && ["test.com", "example.com", "mailinator.com", "tempmail.com", "guerrillamail.com"].includes(email.split("@")[1]) && (
+                <p className="text-xs text-red-500 mt-1">
+                  • Please use a valid email address
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
@@ -95,6 +105,25 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {isRegister && (
+                <ul className="text-xs text-gray-500 mt-2 space-y-1">
+                  <li className={password.length >= 8 ? "text-green-500" : ""}>
+                    {password.length >= 8 ? "✓" : "•"} At least 8 characters
+                  </li>
+                  <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>
+                    {/[A-Z]/.test(password) ? "✓" : "•"} One uppercase letter
+                  </li>
+                  <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>
+                    {/[a-z]/.test(password) ? "✓" : "•"} One lowercase letter
+                  </li>
+                  <li className={/\d/.test(password) ? "text-green-500" : ""}>
+                    {/\d/.test(password) ? "✓" : "•"} One number
+                  </li>
+                  <li className={/[!@#$%^&*]/.test(password) ? "text-green-500" : ""}>
+                    {/[!@#$%^&*]/.test(password) ? "✓" : "•"} One special character (!@#$%^&*)
+                  </li>
+                </ul>
+              )}
             </div>
             <button
               type="submit"
