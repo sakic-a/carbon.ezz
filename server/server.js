@@ -3,15 +3,27 @@ const cors = require("cors");
 const db = require("./db");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const passport = require("passport");
+const session = require("express-session");
+require("./config/passport");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// ── Email transporter ─────────────────────────────────────────────────────────
-// Configure via environment variables in a .env file:
-//   EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, EMAIL_FROM
+console.log("PASSPORT LOADED");
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
   port: parseInt(process.env.EMAIL_PORT || "587"),
@@ -48,7 +60,6 @@ async function sendReplyEmail({ to, userName, originalMessage, replyText }) {
   });
 }
 
-// ── Products ──────────────────────────────────────────────────────────────────
 app.get("/api/products", async (req, res) => {
   try {
     const query = `
@@ -139,13 +150,12 @@ app.post("/api/auth/change-password", async (req, res) => {
   }
 });
 
-// ── OAuth redirect stubs (replace with passport.js when adding real OAuth) ────
-// These endpoints explain what to configure; they return a helpful message in dev.
-app.get("/api/auth/google", (req, res) => {
-  res.status(501).json({
-    error: "Google OAuth not configured. Install passport-google-oauth20 and set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env"
-  });
-});
+app.get(
+  "/api/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
 
 app.get("/api/auth/facebook", (req, res) => {
   res.status(501).json({
@@ -153,11 +163,16 @@ app.get("/api/auth/facebook", (req, res) => {
   });
 });
 
-// OAuth callback – set this as the redirect URI in Google / Facebook dashboards
-app.get("/api/auth/oauth/callback", async (req, res) => {
-  // After passport.js authenticates, redirect with user token/session
-  res.redirect("/shop");
-});
+app.get(
+  "/api/auth/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    res.redirect("http://localhost:5173/shop");
+  }
+);
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 app.post("/api/orders", async (req, res) => {
