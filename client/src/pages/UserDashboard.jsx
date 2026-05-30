@@ -25,7 +25,7 @@ import {
   Star,
 } from "lucide-react";
 
-const API = "http://localhost:5001/api";
+const API = "http://localhost:5000/api";
 
 export default function UserDashboard() {
   const { user, logout } = useAuth();
@@ -49,9 +49,6 @@ export default function UserDashboard() {
 
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
-  const [msgName, setMsgName] = useState(user?.name || "");
-  const [msgEmail, setMsgEmail] = useState(user?.email || "");
-  const [msgPhone, setMsgPhone] = useState("");
   const [msgText, setMsgText] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState("");
@@ -93,7 +90,6 @@ export default function UserDashboard() {
       .catch(() => setMessagesLoading(false));
   }, [user]);
 
-  // Auto-hide order success banner after 5s
   useEffect(() => {
     if (showOrderSuccess) {
       const t = setTimeout(() => setShowOrderSuccess(false), 5000);
@@ -204,10 +200,9 @@ export default function UserDashboard() {
       pwMismatch: "New passwords do not match.", pwTooShort: "Password must be at least 6 characters.",
       logout: "Logout", hello: "Hello",
       orderSuccessBanner: "Your order was placed successfully!",
-      filterAll: "All", filterPending: "Pending", filterProcessing: "Processing",
-      filterShipped: "Shipped", filterDelivered: "Delivered",
-      searchOrders: "Search orders...", totalSpent: "Total Spent",
-      totalOrders: "Total Orders", memberSince: "Member since",
+      filterAll: "All", filterPending: "Pending",  filterDelivered: "Delivered",
+      searchOrders: "Search orders...", 
+      memberSince: "Member since",
       refresh: "Refresh Orders",
     },
     bs: {
@@ -231,10 +226,10 @@ export default function UserDashboard() {
       pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati najmanje 6 znakova.",
       logout: "Odjava", hello: "Zdravo",
       orderSuccessBanner: "Vaša narudžba je uspješno primljena!",
-      filterAll: "Sve", filterPending: "Na čekanju", filterProcessing: "U obradi",
-      filterShipped: "Poslano", filterDelivered: "Dostavljeno",
-      searchOrders: "Pretraži narudžbe...", totalSpent: "Ukupno potrošeno",
-      totalOrders: "Ukupno narudžbi", memberSince: "Član od",
+      filterAll: "Sve", filterPending: "Na čekanju", 
+     filterDelivered: "Dostavljeno",
+      searchOrders: "Pretraži narudžbe...", 
+       memberSince: "Član od",
       refresh: "Osvježi narudžbe",
     },
   };
@@ -243,9 +238,8 @@ export default function UserDashboard() {
 
   const statusIcon = (status) => {
     switch (status) {
-      case "shipped": return <Truck size={14} className="inline mr-1" />;
       case "delivered": return <CheckCircle size={14} className="inline mr-1" />;
-      case "processing": return <Package size={14} className="inline mr-1" />;
+      case "pending": return <Package size={14} className="inline mr-1" />;
       default: return <Clock size={14} className="inline mr-1" />;
     }
   };
@@ -253,23 +247,19 @@ export default function UserDashboard() {
   const statusColor = (status) => {
     switch (status) {
       case "delivered": return "bg-green-100 text-green-700";
-      case "shipped": return "bg-blue-100 text-blue-700";
-      case "processing": return "bg-yellow-100 text-yellow-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
       default: return "bg-gray-100 text-gray-600";
     }
   };
 
   const statusLabel = (status) => {
     const map = {
-      pending: td("statusPending"), processing: td("statusProcessing"),
-      shipped: td("statusShipped"), delivered: td("statusDelivered"),
+      pending: td("statusPending"), delivered: td("statusDelivered"),
     };
     return map[status] ?? status;
   };
 
-  const totalSpent = orders.reduce((acc, o) => acc + Number(o.total), 0);
-  const deliveredCount = orders.filter((o) => o.status === "delivered").length;
-
+ 
   const filteredOrders = orders.filter((o) => {
     const matchesStatus = orderFilter === "all" || o.status === orderFilter;
     const matchesSearch =
@@ -320,35 +310,6 @@ export default function UserDashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-              <ShoppingBag size={20} className="text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-black">{orders.length}</p>
-              <p className="text-xs text-gray-500">{td("totalOrders")}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <TrendingUp size={20} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-black">€{totalSpent.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">{td("totalSpent")}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Star size={20} className="text-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-black">{deliveredCount}</p>
-              <p className="text-xs text-gray-500">{td("statusDelivered")}</p>
-            </div>
-          </div>
-        </div>
 
         <div className="flex gap-1 mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-1 overflow-x-auto">
           {tabs.map((tab) => {
@@ -377,7 +338,6 @@ export default function UserDashboard() {
 
         {activeTab === "orders" && (
           <div className="space-y-4">
-            {/* Filter & Search bar */}
             {!ordersLoading && orders.length > 0 && (
               <div className="flex flex-col sm:flex-row gap-3 mb-2">
                 <div className="relative flex-1">
@@ -391,7 +351,7 @@ export default function UserDashboard() {
                   />
                 </div>
                 <div className="flex gap-1 flex-wrap">
-                  {["all", "pending", "processing", "shipped", "delivered"].map((f) => (
+                  {["all", "pending", "delivered"].map((f) => (
                     <button
                       key={f}
                       onClick={() => setOrderFilter(f)}
@@ -497,6 +457,17 @@ export default function UserDashboard() {
                           {order.shipping_name}, {order.shipping_address},{" "}
                           {order.shipping_city} {order.shipping_zip},{" "}
                           {order.shipping_country}
+                          {order.shipping_phone && (
+                            <span className="ml-2">
+                              📞{" "}
+                              <a
+                                href={`tel:${order.shipping_phone.replace(/\s+/g, "")}`}
+                                className="text-primary underline underline-offset-2 hover:text-yellow-500 transition-colors"
+                              >
+                                {order.shipping_phone}
+                              </a>
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -532,35 +503,7 @@ export default function UserDashboard() {
               )}
               <form onSubmit={handleSendMessage} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{td("name")}</label>
-                    <input
-                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                      value={msgName}
-                      onChange={(e) => setMsgName(e.target.value)}
-                      required
-                    />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{td("email")}</label>
-                    <input
-                      type="email"
-                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                      value={msgEmail}
-                      onChange={(e) => setMsgEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{td("phone")}</label>
-                  <input
-                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                    value={msgPhone}
-                    onChange={(e) => setMsgPhone(e.target.value)}
-                    placeholder="+387 61 123 456"
-                  />
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{td("message")}</label>
                   <textarea
@@ -602,7 +545,7 @@ export default function UserDashboard() {
                         </span>
                       </div>
                       {msg.phone && (
-                        <p className="text-xs text-gray-400 mb-2">📞 {msg.phone}</p>
+                        <p className="text-xs text-gray-400 mb-2">📞 <a href={`tel:${msg.phone.replace(/\s+/g, "")}`} className="hover:text-primary underline underline-offset-2 transition-colors">{msg.phone}</a></p>
                       )}
                       <div className={`mt-3 rounded-lg px-4 py-3 text-sm ${msg.reply ? "bg-primary/10 border border-primary/20" : "bg-gray-100 text-gray-400"}`}>
                         {msg.reply ? (
