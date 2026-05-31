@@ -14,7 +14,7 @@ export default function ProductCard({ product }) {
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
-  const name = lang === "bs" ? product.nameBs : product.name;
+  const name = lang === "bs" ? (product.nameBs || product.name) : product.name;
   const isAdmin = user?.role === "admin";
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden transition-shadow hover:shadow-md group">
