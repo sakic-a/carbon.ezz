@@ -12,6 +12,8 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import ProductDetails from "./pages/ProductDetails";
+import Configurator from "./pages/Configurator";
+
 function App() {
   return (
     <Router>
@@ -30,6 +32,7 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/configurator" element={<Configurator />} />
                 </Routes>
               </main>
               <Footer />

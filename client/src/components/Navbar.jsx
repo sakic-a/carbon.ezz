@@ -29,6 +29,9 @@ export default function Navbar() {
           <Link to="/gallery" className="hover:text-primary transition-colors">
             {t("nav", "gallery")}
           </Link>
+          <Link to="/configurator" className="hover:text-primary transition-colors">
+            {t("nav", "configurator")}
+          </Link>
           <Link to="/about" className="hover:text-primary transition-colors">
             {t("nav", "about")}
           </Link>
@@ -112,6 +115,13 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
           >
             {t("nav", "gallery")}
+          </Link>
+          <Link
+            to="/configurator"
+            className="text-lg py-2 border-b border-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            {t("nav", "configurator")}
           </Link>
           <Link
             to="/about"
