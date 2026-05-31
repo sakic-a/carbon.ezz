@@ -82,7 +82,13 @@ export default function About() {
               Visoko, Bosnia and Herzegovina
             </p>
             <p>
-              <strong className="text-gray-700">Phone:</strong> +387 61 353 966
+              <strong className="text-gray-700">Phone:</strong>{" "}
+              <a
+                href="tel:+38761353966"
+                className="text-primary hover:underline font-medium transition-colors"
+              >
+                +387 61 353 966
+              </a>
             </p>
           </div>
           <form onSubmit={handleSendMessage} className="space-y-4">
