@@ -128,15 +128,6 @@ app.post("/api/auth/register", async (req, res) => {
     });
   }
 
-  const blockedDomains = ["test.com", "test@test.com", "example.com", "mailinator.com", "tempmail.com", "guerrillamail.com"];
-  const emailDomain = email.split("@")[1];
-  if (!emailDomain || blockedDomains.includes(emailDomain)) {
-    return res.status(400).json({
-      success: false,
-      error: "Please use a valid email address."
-    });
-  }
-
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
   if (!passwordRegex.test(password)) {
     return res.status(400).json({

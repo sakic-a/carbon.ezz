@@ -88,11 +88,7 @@ export default function Login() {
                 placeholder="email@example.com"
                 required
               />
-              {isRegister && email.length > 0 && ["test.com", "example.com", "mailinator.com", "tempmail.com", "guerrillamail.com"].includes(email.split("@")[1]) && (
-                <p className="text-xs text-red-500 mt-1">
-                  • Please use a valid email address
-                </p>
-              )}
+
             </div>
             <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
