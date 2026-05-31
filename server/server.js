@@ -10,7 +10,7 @@ const passport = require("passport");
 const session = require("express-session");
 require("./config/passport");
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -226,10 +226,18 @@ app.get(
   "/api/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "/login",
+    failureRedirect: "http://localhost:5173/login",
   }),
   (req, res) => {
-    res.redirect("http://localhost:5173/shop");
+    const token = jwt.sign(
+      { id: req.user.id, email: req.user.email, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    const user = { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role };
+    res.redirect(
+      `http://localhost:5173/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
+    );
   }
 );
 
@@ -333,6 +341,9 @@ app.get("/api/admin/orders", authenticateToken, requireAdmin, async (req, res) =
 app.patch("/api/orders/:id/status", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+  const validStatuses = ["Pending", "Approved", "Declined"];
+  if (!validStatuses.includes(status))
+    return res.status(400).json({ success: false, error: "Invalid status value" });
   try {
     const result = await db.query("UPDATE orders SET status = $1 WHERE id = $2 RETURNING *", [status, id]);
     if (result.rows.length === 0) return res.status(404).json({ success: false, error: "Order not found" });
@@ -360,7 +371,7 @@ app.post("/api/products", authenticateToken, requireAdmin, async (req, res) => {
     }
     await db.query("COMMIT");
     newProduct.gallery = gallery || [];
-    res.json(newProduct);
+    res.json({ ...newProduct, nameBs: newProduct.name_bs });
   } catch (err) {
     await db.query("ROLLBACK");
     console.error(err.message);
@@ -398,7 +409,7 @@ app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) =
     }
     await db.query("COMMIT");
     updatedProduct.gallery = gallery || [];
-    res.json(updatedProduct);
+    res.json({ ...updatedProduct, nameBs: updatedProduct.name_bs });
   } catch (err) {
     await db.query("ROLLBACK");
     console.error(err.message);

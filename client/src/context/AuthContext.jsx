@@ -50,9 +50,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
   const getToken = () => localStorage.getItem("token");
+  const loginWithToken = (token, userData) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, getToken, isAdmin: user?.role === "admin" }}
+      value={{ user, login, register, logout, getToken, loginWithToken, isAdmin: user?.role === "admin" }}
     >
       {children}
     </AuthContext.Provider>

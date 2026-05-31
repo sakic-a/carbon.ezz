@@ -47,7 +47,7 @@ export default function Login() {
     if (result.success) {
       setSuccess(isRegister ? "Registration Successful!" : "Login Successful!");
       setTimeout(() => {
-        if (!isRegister && email === "admin@admin.com") {
+        if (!isRegister && result.user?.role === "admin") {
           navigate("/admin");
         } else {
           navigate("/shop");
@@ -59,11 +59,11 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = "http://localhost:5001/api/auth/google";
   };
 
   const handleFacebookLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/facebook";
+    window.location.href = "http://localhost:5001/api/auth/facebook";
   };
 
   const labels = {
@@ -111,8 +111,9 @@ export default function Login() {
             </button>
             <button
               type="button"
-              onClick={handleFacebookLogin}
-              className="w-full flex items-center justify-center gap-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm shadow-sm"
+              disabled
+              title="Coming soon"
+              className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-gray-50 text-gray-400 font-semibold py-2.5 px-4 rounded-lg text-sm cursor-not-allowed opacity-60"
             >
               <FacebookIcon />
               {lbl("facebookBtn")}

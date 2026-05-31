@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
 import UserDashboard from "./pages/UserDashboard";
+import GoogleCallback from "./pages/GoogleCallback";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
+                  <Route path="/auth/google/callback" element={<GoogleCallback />} />
                 </Routes>
               </main>
               <Footer />

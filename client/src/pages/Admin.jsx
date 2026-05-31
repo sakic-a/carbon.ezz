@@ -7,13 +7,16 @@ import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2 } from 'lucide
 import { CATEGORIES } from '../data/categories';
 export default function Admin() {
     const { user, getToken } = useAuth();
-    const { t } = useLanguage();
+    const wrapText = (text, every = 95) =>
+        text.replace(new RegExp(`(.{${every}})`, "g"), "$1\n");
+    const { t, lang } = useLanguage();
     const { products, addProduct, updateProduct, deleteProduct } = useShop();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [messages, setMessages] = useState([]);
     const [activeTab, setActiveTab] = useState('orders');
     const [pName, setPName] = useState('');
+    const [pNameBs, setPNameBs] = useState('');
     const [pPrice, setPPrice] = useState('');
     const [pCategory, setPCategory] = useState('accessories');
     const [pImage, setPImage] = useState('');
@@ -67,7 +70,7 @@ export default function Admin() {
         if (editingProductId) {
             updateProduct(editingProductId, {
                 name: pName,
-                nameBs: pName,
+                nameBs: pNameBs,
                 price: parseFloat(pPrice),
                 category: pCategory,
                 image: pImage,
@@ -78,7 +81,7 @@ export default function Admin() {
         } else {
             addProduct({
                 name: pName,
-                nameBs: pName,
+                nameBs: pNameBs,
                 price: parseFloat(pPrice),
                 category: pCategory,
                 image: pImage,
@@ -87,9 +90,12 @@ export default function Admin() {
             });
         }
         setPName('');
+        setPNameBs('');
         setPPrice('');
         setPDescription('');
         setPGallery('');
+        setPImage('');
+        setPCategory('accessories');
     };
     const handleReply = async (msgId, replyText) => {
         try {
@@ -158,7 +164,7 @@ export default function Admin() {
                                             <tbody>
                                                 {orders.map(order => (
                                                     <tr key={order.id} className="border-b border-gray-100 last:border-0">
-                                                        <td className="p-3">{new Date(order.date).toLocaleDateString()}</td>
+                                                        <td className="p-3">{order.created_at ? new Date(order.created_at).toLocaleDateString("en-GB") : "—"}</td>
                                                         <td className="p-3 font-medium">{order.user}</td>
                                                         <td className="p-3">€{Number(order.total).toFixed(2)}</td>
                                                         <td className="p-3 text-sm text-gray-600">
@@ -214,8 +220,12 @@ export default function Admin() {
                                     <h3 className="font-bold mb-4">{editingProductId ? 'Edit Product' : t('admin', 'addProduct')}</h3>
                                     <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')}</label>
+                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')} (EN)</label>
                                             <input className="w-full p-2 border rounded" value={pName} onChange={(e) => setPName(e.target.value)} required />
+                                        </div>
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')} (BS)</label>
+                                            <input className="w-full p-2 border rounded" value={pNameBs} onChange={(e) => setPNameBs(e.target.value)} required />
                                         </div>
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productPrice')}</label>
@@ -255,10 +265,12 @@ export default function Admin() {
                                                 <button type="button" onClick={() => {
                                                     setEditingProductId(null);
                                                     setPName('');
+                                                    setPNameBs('');
                                                     setPPrice('');
                                                     setPDescription('');
                                                     setPGallery('');
                                                     setPImage('');
+                                                    setPCategory('accessories');
                                                 }} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
                                                     Cancel
                                                 </button>
@@ -271,13 +283,14 @@ export default function Admin() {
                                         <div key={p.id} className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
                                             <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
                                             <div className="flex-1">
-                                                <div className="font-bold">{p.name}</div>
+                                                <div className="font-bold">{lang === "bs" ? (p.nameBs || p.name) : p.name}</div>
                                                 <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} - {p.category}</div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button onClick={() => {
                                                     setEditingProductId(p.id);
                                                     setPName(p.name);
+                                                    setPNameBs(p.nameBs || '');
                                                     setPPrice(p.price);
                                                     setPCategory(p.category);
                                                     setPImage(p.image);
@@ -307,17 +320,17 @@ export default function Admin() {
                                             <div key={msg.id} className="border border-gray-200 rounded p-4">
                                                 <div className="flex justify-between mb-2">
                                                     <strong className="text-primary">{msg.name}</strong>
-                                                    <span className="text-sm text-gray-400">{new Date(msg.date).toLocaleDateString()}</span>
+                                                    <span className="text-sm text-gray-400">{msg.created_at ? new Date(msg.created_at).toLocaleDateString("en-GB") : "—"}</span>
                                                 </div>
                                                 <div className="text-sm text-gray-500 mb-3">
                                                     {msg.email}
                                                     {msg.phone && <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{msg.phone}</span>}
                                                 </div>
-                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4">{msg.message}</p>
+                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4 whitespace-pre-wrap">{wrapText(msg.message)}</p>
                                                 {msg.reply ? (
                                                     <div className="bg-green-50 p-3 rounded border border-green-100 ml-8">
                                                         <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
-                                                        <p className="text-green-900">{msg.reply}</p>
+                                                        <p className="text-green-900 whitespace-pre-wrap">{wrapText(msg.reply)}</p>
                                                     </div>
                                                 ) : (
                                                     <div className="flex gap-2 mt-2">

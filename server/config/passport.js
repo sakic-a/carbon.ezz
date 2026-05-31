@@ -61,6 +61,6 @@ passport.deserializeUser(async (id, done) => {
     [id]
   );
 
-  done(null, result.rows[0]);
+  done(null, result.rows[0] || null);
 });
 }
