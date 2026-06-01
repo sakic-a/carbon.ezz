@@ -32,7 +32,8 @@ export default function Login() {
         if (!isRegister && email === "admin@admin.com") {
           navigate("/admin");
         } else {
-          navigate("/shop");
+          const redirectTo = searchParams.get("redirect") || "/shop";
+          navigate(redirectTo);
         }
       }, 1500);
     } else {

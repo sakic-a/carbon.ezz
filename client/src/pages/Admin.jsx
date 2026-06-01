@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2 } from 'lucide-react';
+import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 export default function Admin() {
     const { user, getToken } = useAuth();
@@ -12,6 +12,7 @@ export default function Admin() {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [messages, setMessages] = useState([]);
+    const [inquiries, setInquiries] = useState([]);
     const [activeTab, setActiveTab] = useState('orders');
     const [pName, setPName] = useState('');
     const [pPrice, setPPrice] = useState('');
@@ -45,6 +46,16 @@ export default function Admin() {
                 if (Array.isArray(data)) setMessages(data);
             })
             .catch(err => console.error("Failed to load messages", err));
+        fetch('http://localhost:5001/api/admin/configurator-inquiries', {
+            headers: {
+                 "Authorization": `Bearer ${getToken()}`,
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setInquiries(data);
+            })
+            .catch(err => console.error("Failed to load configurator inquiries", err));
     }, [navigate]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
@@ -109,6 +120,41 @@ export default function Admin() {
             console.error("Failed to reply", err);
         }
     };
+    const handleDeleteInquiry = async (inquiryId) => {
+        if (!window.confirm(t('faq', 'confirmDelete') || "Are you sure you want to delete this inquiry?")) return;
+        try {
+            const res = await fetch(`http://localhost:5001/api/admin/configurator-inquiries/${inquiryId}`, {
+                method: 'DELETE',
+                headers: { 
+                    'Authorization': `Bearer ${getToken()}`, 
+                }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setInquiries(inquiries.filter(i => i.id !== inquiryId));
+            }
+        } catch (err) {
+            console.error("Failed to delete inquiry", err);
+        }
+    };
+    const handleInquiryReply = async (inqId, replyText) => {
+        try {
+            const res = await fetch(`http://localhost:5001/api/admin/configurator-inquiries/${inqId}/reply`, {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json' ,
+                    'Authorization': `Bearer ${getToken()}`, 
+                },
+                body: JSON.stringify({ reply: replyText })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setInquiries(inquiries.map(i => i.id === inqId ? { ...i, reply: replyText } : i));
+            }
+        } catch (err) {
+            console.error("Failed to reply to configurator inquiry", err);
+        }
+    };
     if (!user || user.role !== 'admin') return null;
     return (
         <div className="py-16 bg-gray-50 min-h-screen">
@@ -127,6 +173,12 @@ export default function Admin() {
                             onClick={() => setActiveTab('products')}
                         >
                             <ShoppingBag size={20} /> {t('admin', 'products')}
+                        </button>
+                        <button
+                            className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'inquiries' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                            onClick={() => setActiveTab('inquiries')}
+                        >
+                            <Sliders size={20} /> {t('admin', 'inquiries')}
                         </button>
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'messages' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -337,6 +389,115 @@ export default function Admin() {
                                                             onClick={(e) => {
                                                                 const input = e.target.previousSibling;
                                                                 handleReply(msg.id, input.value);
+                                                                input.value = '';
+                                                            }}
+                                                        >
+                                                            Send
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {activeTab === 'inquiries' && (
+                            <div>
+                                <h2 className="text-xl font-bold mb-6">{t('admin', 'inquiries')}</h2>
+                                {inquiries.length === 0 ? (
+                                    <p className="text-gray-500">{t('admin', 'noInquiries')}</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {inquiries.map(inq => (
+                                            <div key={inq.id} className="border border-gray-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow relative">
+                                                <button
+                                                    onClick={() => handleDeleteInquiry(inq.id)}
+                                                    className="absolute top-4 right-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
+                                                    title={t('admin', 'delete')}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+
+                                                <div className="flex flex-col md:flex-row justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
+                                                    <div>
+                                                        <h3 className="font-extrabold text-lg text-black">{inq.name}</h3>
+                                                        <p className="text-sm text-gray-500">{inq.email} {inq.phone && <span className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{inq.phone}</span>}</p>
+                                                    </div>
+                                                    <div className="text-right md:text-right text-sm text-gray-400 font-semibold self-start md:self-center">
+                                                        {new Date(inq.created_at).toLocaleString()}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 text-sm mb-4">
+                                                    <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-xs">Specification:</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 capitalize">
+                                                        <div><span className="font-semibold">Model:</span> {inq.selected_model}</div>
+                                                        <div><span className="font-semibold">Car Model:</span> {inq.car_model}</div>
+                                                        <div><span className="font-semibold">Shape:</span> {t('configurator', inq.wheel_shape) || inq.wheel_shape}</div>
+                                                        <div><span className="font-semibold">Top Grip:</span> {t('configurator', inq.top_material) || inq.top_material}</div>
+                                                        <div><span className="font-semibold">Side Grips:</span> {t('configurator', inq.side_material) || inq.side_material}</div>
+                                                        <div><span className="font-semibold">Bottom Grip:</span> {t('configurator', inq.bottom_material) || inq.bottom_material}</div>
+                                                        <div>
+                                                            <span className="font-semibold">Stitching:</span>{" "}
+                                                            <span className="inline-flex items-center gap-1.5 font-medium text-black">
+                                                                <span 
+                                                                    className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                                                                    style={{ 
+                                                                        backgroundColor: inq.thread_colour === 'white' ? '#ffffff' : 
+                                                                                        inq.thread_colour === 'black' ? '#000000' : inq.thread_colour 
+                                                                    }}
+                                                                />
+                                                                {inq.thread_colour}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col-span-2 md:col-span-3">
+                                                            <span className="font-semibold">Ring:</span>{" "}
+                                                            {inq.ring_enabled ? (
+                                                                <span className="inline-flex items-center gap-1.5 font-medium text-black">
+                                                                    <span 
+                                                                        className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                                                                        style={{ backgroundColor: inq.ring_colour }}
+                                                                    />
+                                                                    {inq.ring_colour}
+                                                                </span>
+                                                            ) : (
+                                                                "No Ring"
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {inq.notes && (
+                                                    <div className="bg-yellow-50/50 rounded-xl p-4 border border-yellow-100 text-sm">
+                                                        <h4 className="font-bold text-yellow-800 mb-1 uppercase tracking-wider text-xs">Customer Notes:</h4>
+                                                        <p className="text-gray-700 italic">"{inq.notes}"</p>
+                                                    </div>
+                                                )}
+
+                                                {inq.reply ? (
+                                                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 mt-4">
+                                                        <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
+                                                        <p className="text-green-900">{inq.reply}</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-2 mt-4">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Type a price offer or reply..."
+                                                            className="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-black"
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    handleInquiryReply(inq.id, e.target.value);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
+                                                        />
+                                                        <button
+                                                            className="bg-primary text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-yellow-400"
+                                                            onClick={(e) => {
+                                                                const input = e.target.previousSibling;
+                                                                handleInquiryReply(inq.id, input.value);
                                                                 input.value = '';
                                                             }}
                                                         >

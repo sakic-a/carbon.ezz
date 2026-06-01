@@ -362,6 +362,101 @@ app.patch("/api/messages/:id/reply", authenticateToken, requireAdmin, async (req
     res.status(500).send("Server Error");
   }
 });
+app.post("/api/configurator-inquiries", async (req, res) => {
+  const {
+    name,
+    email,
+    phone,
+    selectedModel,
+    wheelShape,
+    topMaterial,
+    sideMaterial,
+    bottomMaterial,
+    ringEnabled,
+    ringColour,
+    threadColour,
+    notes,
+    carModel,
+  } = req.body;
+
+  if (!name || !email || !selectedModel || !carModel || !phone) {
+    return res.status(400).json({ success: false, error: "Missing required contact, model, or car details" });
+  }
+
+  try {
+    const result = await db.query(
+      `INSERT INTO configurator_inquiries 
+       (name, email, phone, selected_model, wheel_shape, top_material, side_material, bottom_material, ring_enabled, ring_colour, thread_colour, notes, car_model)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+      [
+        name,
+        email,
+        phone,
+        selectedModel,
+        wheelShape || "factory",
+        topMaterial || "smooth",
+        sideMaterial || "smooth",
+        bottomMaterial || "smooth",
+        !!ringEnabled,
+        ringColour || null,
+        threadColour || "black",
+        notes || null,
+        carModel,
+      ]
+    );
+    res.json({ success: true, inquiry: result.rows[0] });
+  } catch (err) {
+    console.error("Failed to insert configurator inquiry:", err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.get("/api/admin/configurator-inquiries", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT * FROM configurator_inquiries ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Failed to fetch configurator inquiries:", err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.delete("/api/admin/configurator-inquiries/:id", authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      "DELETE FROM configurator_inquiries WHERE id = $1 RETURNING *",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Inquiry not found" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to delete configurator inquiry:", err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.patch("/api/admin/configurator-inquiries/:id/reply", authenticateToken, requireAdmin, async (req, res) => { 
+  const { id } = req.params;
+  const { reply } = req.body;
+  try {
+    const result = await db.query(
+      "UPDATE configurator_inquiries SET reply = $1 WHERE id = $2 RETURNING *",
+      [reply, id],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Inquiry not found" });
+    }
+    res.json({ success: true, inquiry: result.rows[0] });
+  } catch (err) {
+    console.error("Failed to reply to configurator inquiry:", err.message);
+    res.status(500).send("Server Error");
+  }
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

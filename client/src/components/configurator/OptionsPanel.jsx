@@ -32,7 +32,7 @@ function MaterialSelector({ label, options, value, actionType }) {
   );
 }
 
-export default function OptionsPanel() {
+export default function OptionsPanel({ onOpenInquiry }) {
   const { state, dispatch } = useConfigurator();
   const { t } = useLanguage();
 
@@ -117,6 +117,13 @@ export default function OptionsPanel() {
           ))}
         </div>
       </div>
+
+      <button
+        onClick={onOpenInquiry}
+        className="w-full bg-primary hover:bg-yellow-400 text-black font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 mt-8"
+      >
+        {t('configurator', 'inquiryButton')}
+      </button>
     </div>
   );
 }
