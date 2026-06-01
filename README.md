@@ -66,6 +66,8 @@ A full schema dump is available at `server/dump.sql`.
 
 ## API Reference
 
+> Base URL: `http://localhost:5001`
+
 ### Products
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -112,7 +114,7 @@ A full schema dump is available at `server/dump.sql`.
 ### 1. Clone & install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/sakic-a/carbon.ezz
 cd carbon.ezz
 
 # Install client deps
@@ -153,6 +155,7 @@ EMAIL_FROM="Carbon.ezz <your_gmail@gmail.com>"
 ### 3. Set up the database
 
 ```bash
+createdb -U your_db_user carbonezz
 psql -U your_db_user -d carbonezz -f server/dump.sql
 ```
 
