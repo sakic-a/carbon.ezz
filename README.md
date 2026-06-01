@@ -4,6 +4,20 @@ A full-stack e-commerce platform for custom steering wheels and automotive parts
 
 ---
 
+## Table of Contents
+
+- [Tech Stack](#tech-stack)
+- [Modules](#modules)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [API Reference](#api-reference)
+- [Local Setup](#local-setup)
+- [User Roles](#user-roles)
+- [Input Validation](#input-validation)
+
+---
+
 ## Tech Stack
 
 | Layer | Technologies |
