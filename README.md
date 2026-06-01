@@ -16,6 +16,32 @@ A full-stack e-commerce platform for custom steering wheels and automotive parts
 
 ---
 
+## Modules
+
+### Frontend
+
+| Module | Files | Responsibility |
+|--------|-------|---------------|
+| **Auth** | `context/AuthContext.jsx`, `pages/Login.jsx`, `pages/GoogleCallback.jsx` | Login, registration, JWT storage, Google OAuth redirect handling |
+| **Shop** | `pages/Shop.jsx`, `pages/ProductDetails.jsx`, `components/ProductCard.jsx` | Product listing, filtering by category, individual product view |
+| **Cart & Checkout** | `pages/Cart.jsx`, `context/ShopContext.jsx` | Cart state, item quantities, order submission |
+| **Configurator** | `pages/Configurator.jsx`, `components/configurator/`, `context/ConfiguratorContext.jsx` | Interactive wheel builder with material and ring selection |
+| **Admin** | `pages/Admin.jsx` | Product CRUD, order status management, message inbox with reply |
+| **Dashboard** | `pages/UserDashboard.jsx` | Per-user order history and message thread |
+| **Language** | `context/LanguageContext.jsx`, `data/translations.js` | EN/BS language switching across the UI |
+
+### Backend
+
+| Module | Location | Responsibility |
+|--------|----------|---------------|
+| **Auth** | `server.js` — `/api/auth/*`, `config/passport.js` | JWT login/register, password change, Google OAuth via Passport |
+| **Products** | `server.js` — `/api/products/*` | Public product reads; admin-only create, update, delete with image gallery |
+| **Orders** | `server.js` — `/api/orders/*` | Order placement with server-side price resolution, per-user and admin order views |
+| **Messages** | `server.js` — `/api/contact`, `/api/messages/*` | Contact form submissions, admin reply (persisted + emailed via Nodemailer) |
+| **Database** | `db.js` | PostgreSQL connection pool shared across all routes |
+
+---
+
 ## Features
 
 - **Shop** — Browse products, image galleries, and category filtering
