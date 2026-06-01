@@ -45,7 +45,7 @@ function StitchingPreviewCard() {
 }
 
 function PriceInquiryModal({ isOpen, onClose }) {
-  const { state } = useConfigurator();
+  const { state, dispatch } = useConfigurator();
   const { user } = useAuth();
   const { submitInquiry } = useShop();
   const { t, lang } = useLanguage();
@@ -90,6 +90,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
     setLoading(false);
     if (success) {
       alert(t("configurator", "inquirySuccess"));
+      dispatch({ type: 'RESET' });
       onClose();
     } else {
       alert(lang === "bs" ? "Došlo je do greške. Pokušajte ponovo." : "Something went wrong. Please try again.");
