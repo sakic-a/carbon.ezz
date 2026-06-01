@@ -1,0 +1,4 @@
+{
+    "css.lint.unknownAtRules": "ignore"
+}
+//ai said vs code doesnt know what tailwind css is so i need to implement this in order to not show errors

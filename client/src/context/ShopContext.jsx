@@ -1,0 +1,137 @@
+import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
+const ShopContext = createContext();
+
+export function ShopProvider({ children }) {
+  const { getToken } = useAuth();
+  const [cart, setCart] = useState([]);
+  const [productsList, setProductsList] = useState([]);
+  useEffect(() => {
+    const storedCart = localStorage.getItem("cart");
+    if (storedCart) {
+      setCart(JSON.parse(storedCart));
+    }
+    fetch("http://localhost:5001/api/products")
+      .then((res) => res.json())
+      .then((data) => setProductsList(data))
+      .catch((err) => console.error("Failed to load products", err));
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+  const addToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+  const removeFromCart = (productId) => {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+  };
+  const clearCart = () => setCart([]);
+  const addProduct = async (product) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/products", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json" ,
+           "Authorization": `Bearer ${getToken()}`, 
+        },
+        body: JSON.stringify(product),
+      });
+      const newProduct = await response.json();
+      setProductsList((prev) => [...prev, newProduct]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const updateProduct = async (id, productData) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/products/${id}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json" ,
+          "Authorization": `Bearer ${getToken()}`, 
+        },
+        body: JSON.stringify(productData),
+      });
+      const updatedProduct = await response.json();
+      setProductsList((prev) => prev.map((p) => p.id === id ? updatedProduct : p));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const deleteProduct = async (id) => {
+    try {
+      await fetch(`http://localhost:5001/api/products/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${getToken()}`,
+        },
+      });
+      setProductsList((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const placeOrder = async (user, shippingDetails) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: user.email,
+          shipping: shippingDetails,
+          items: cart.map((item) => ({ id: item.id, quantity: item.quantity })),
+        }),
+      });
+      if (!response.ok) throw new Error("Order failed");
+      clearCart();
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+  const sendMessage = async (contactData) => {
+    try {
+      await fetch("http://localhost:5001/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactData),
+      });
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+  return (
+    <ShopContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        clearCart,
+        placeOrder,
+        products: productsList,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        sendMessage,
+      }}
+    >
+      {children}
+    </ShopContext.Provider>
+  );
+}
+export function useShop() {
+  return useContext(ShopContext);
+}

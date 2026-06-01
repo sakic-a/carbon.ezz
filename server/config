@@ -1,0 +1,10 @@
+const portfinder = require("portfinder");
+
+portfinder.basePort = process.env.PORT || 5000;
+
+async function getPort() {
+  const port = await portfinder.getPortPromise();
+  return port;
+}
+
+module.exports = getPort;
