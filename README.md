@@ -167,6 +167,7 @@ PORT=5001
 
 # Auth
 JWT_SECRET=your_jwt_secret_here
+SESSION_SECRET=your_session_secret_here
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
