@@ -113,6 +113,19 @@ export function ShopProvider({ children }) {
       return false;
     }
   };
+  const submitInquiry = async (inquiryData) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/configurator-inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inquiryData),
+      });
+      return response.ok;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
   return (
     <ShopContext.Provider
       value={{
@@ -126,6 +139,7 @@ export function ShopProvider({ children }) {
         updateProduct,
         deleteProduct,
         sendMessage,
+        submitInquiry,
       }}
     >
       {children}
