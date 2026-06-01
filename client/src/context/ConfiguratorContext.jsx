@@ -1,17 +1,20 @@
 import { createContext, useContext, useReducer } from 'react';
 
 const initialState = {
+  selectedModel: null,
   wheelShape: 'factory',
   topMaterial: 'smooth',
   sideMaterial: 'smooth',
   bottomMaterial: 'smooth',
   ringEnabled: false,
   ringColour: 'red',  
-  threadColour: 'factory',
+  threadColour: 'black',
 };
 
 function configuratorReducer(state, action) {
   switch (action.type) {
+    case 'SET_MODEL':
+      return { ...state, selectedModel: action.value };
     case 'SET_WHEEL_SHAPE':
       return { ...state, wheelShape: action.value };
     case 'SET_TOP':

@@ -1,4 +1,5 @@
 import { useConfigurator } from '../../context/ConfiguratorContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { ringColours } from '../../data/configuratorConstants';
 
 const topMaterials    = ['alcantara', 'carbon', 'perforated'];
@@ -7,9 +8,8 @@ const bottomMaterials = ['alcantara', 'carbon', 'perforated'];
 
 export default function WheelPreview() {
   const { state } = useConfigurator();
-  const { topMaterial, sideMaterial, bottomMaterial, ringEnabled, ringColour, wheelShape } = state;
-
-  const BASE = `/wheels/audi/${wheelShape}`;
+  const { t, lang } = useLanguage();
+  const { topMaterial, sideMaterial, bottomMaterial, ringEnabled, ringColour, wheelShape, selectedModel } = state;
 
   const layer = (visible) => ({
     position: 'absolute',
@@ -20,6 +20,21 @@ export default function WheelPreview() {
     transition: 'opacity 0.35s ease',
     pointerEvents: 'none',
   });
+
+  if (selectedModel !== 'audi') {
+    return (
+      <div 
+        style={{ position: 'relative', width: '100%', aspectRatio: '1377/768' }} 
+        className="flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-inner"
+      >
+        <span className="text-gray-400 font-bold uppercase tracking-wider text-sm">
+          {lang === 'bs' ? 'Uskoro' : 'Coming Soon'}
+        </span>
+      </div>
+    );
+  }
+
+  const BASE = `/wheels/audi/${wheelShape}`;
 
   return (
     <div style={{ position: 'relative', width: '100%', aspectRatio: '1377/768' }}>

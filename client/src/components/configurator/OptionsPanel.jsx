@@ -93,6 +93,30 @@ export default function OptionsPanel() {
           </div>
         </div>
       )}
+
+      <div className="mb-6">
+        <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'stitching')}</p>
+        <div className="flex gap-2 flex-wrap">
+          {[
+            { id: 'white', color: '#ffffff', label: 'threadWhite' },
+            { id: 'red', color: 'red', label: 'red' },
+            { id: 'blue', color: 'blue', label: 'blue' },
+            { id: 'yellow', color: 'yellow', label: 'yellow' },
+            { id: 'green', color: 'green', label: 'green' },
+            { id: 'orange', color: 'orange', label: 'orange' },
+            { id: 'black', color: 'black', label: 'black' }
+          ].map(thread => (
+            <button
+              key={thread.id}
+              title={t('configurator', thread.label)}
+              onClick={() => dispatch({ type: 'SET_THREAD', value: thread.id })}
+              className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110
+                ${state.threadColour === thread.id ? 'border-black scale-110' : 'border-gray-300'}`}
+              style={{ backgroundColor: thread.color }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
