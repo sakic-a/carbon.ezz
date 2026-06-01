@@ -158,31 +158,31 @@ Create `server/.env`:
 # Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=carbonezz
+DB_NAME=carbon_ezz
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 
+# Server
+PORT=5001
+
 # Auth
 JWT_SECRET=your_jwt_secret_here
-SESSION_SECRET=your_session_secret_here
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# Email (Gmail SMTP)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_gmail@gmail.com
-EMAIL_PASS=your_app_password
-EMAIL_FROM="Carbon.ezz <your_gmail@gmail.com>"
+# Email (Gmail SMTP) — optional, enables admin reply emails when set
+#EMAIL_USER=your_gmail@gmail.com
+#EMAIL_PASS=your_app_password
+#EMAIL_FROM="Carbon.ezz <your_gmail@gmail.com>"
 ```
 
 ### 3. Set up the database
 
 ```bash
-createdb -U your_db_user carbonezz
-psql -U your_db_user -d carbonezz -f server/dump.sql
+createdb -U your_db_user carbon_ezz
+psql -U your_db_user -d carbon_ezz -f server/dump.sql
 ```
 
 ### 4. Run
