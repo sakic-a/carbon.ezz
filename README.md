@@ -92,6 +92,9 @@ A full schema dump is available at `server/dump.sql`.
 
 ## API Reference
 
+> Base URL: `http://localhost:5001`
+
+
 ### Products
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -138,7 +141,7 @@ A full schema dump is available at `server/dump.sql`.
 ### 1. Clone & install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/sakic-a/carbon.ezz
 cd carbon.ezz
 
 # Install client deps
@@ -165,6 +168,7 @@ PORT=5001
 
 # Auth
 JWT_SECRET=your_jwt_secret_here
+SESSION_SECRET=your_session_secret_here
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
