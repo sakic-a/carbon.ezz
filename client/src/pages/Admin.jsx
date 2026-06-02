@@ -339,7 +339,7 @@ export default function Admin() {
                     <div className="bg-white p-5 rounded-lg shadow-sm h-fit">
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'orders' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                            onClick={() => setActiveTab('orders')}
+                            onClick={() => { setActiveTab('orders'); setReorderMode(false); }}
                         >
                             <Package size={20} /> {t('admin', 'orders')}
                         </button>
@@ -351,13 +351,13 @@ export default function Admin() {
                         </button>
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'inquiries' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                            onClick={() => setActiveTab('inquiries')}
+                            onClick={() => { setActiveTab('inquiries'); setReorderMode(false); }}
                         >
                             <Sliders size={20} /> {t('admin', 'inquiries')}
                         </button>
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'messages' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                            onClick={() => setActiveTab('messages')}
+                            onClick={() => { setActiveTab('messages'); setReorderMode(false); }}
                         >
                             <MessageSquare size={20} /> {t('admin', 'messages')}
                         </button>
@@ -497,7 +497,7 @@ export default function Admin() {
                                                     <label
                                                         className={`w-full max-w-[250px] h-[140px] flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all group ${dragOverMain ? 'border-primary bg-yellow-50/40 scale-[1.02]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
                                                         onDragOver={(e) => { e.preventDefault(); setDragOverMain(true); }}
-                                                        onDragLeave={() => setDragOverMain(false)}
+                                                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverMain(false); }}
                                                         onDrop={(e) => { e.preventDefault(); setDragOverMain(false); handleMainImageUpload(e.dataTransfer.files[0]); }}
                                                     >
                                                         {uploadingMain ? (
@@ -560,7 +560,7 @@ export default function Admin() {
                                                     <label
                                                         className={`aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all group ${dragOverGallery ? 'border-primary bg-yellow-50/40 scale-[1.04]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
                                                         onDragOver={(e) => { e.preventDefault(); setDragOverGallery(true); }}
-                                                        onDragLeave={() => setDragOverGallery(false)}
+                                                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverGallery(false); }}
                                                         onDrop={(e) => { e.preventDefault(); setDragOverGallery(false); handleGalleryUpload(Array.from(e.dataTransfer.files)); }}
                                                     >
                                                         <Plus className={`w-6 h-6 transition-colors ${dragOverGallery ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`} />
