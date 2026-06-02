@@ -25,8 +25,8 @@ A full-stack e-commerce platform for custom steering wheels and automotive parts
 | Frontend | React 18, Vite, React Router v7, Tailwind CSS, Lucide Icons |
 | Backend | Node.js, Express |
 | Database | PostgreSQL |
-| Auth | JWT (7-day tokens), Google OAuth 2.0 (Passport.js) |
-| Email | Nodemailer (Gmail SMTP) |
+| Auth | JWT, Google OAuth 2.0 (Passport.js) |
+| Email | Nodemailer (Gmail SMTP)* |
 
 ---
 
@@ -219,17 +219,9 @@ Open [http://localhost:5173](http://localhost:5173).
 
 | Role | Access |
 |------|--------|
-| Guest | Browse products, contact form, place orders |
+| Guest | Browse products, contact form, place orders, configurator |
 | `customer` | + Dashboard (orders, messages), change password |
 | `admin` | + Admin panel (products, orders, messages + reply) |
 
 Password requirements: minimum 8 characters, must include uppercase, lowercase, number, and one of `!@#$%^&*`.
 
----
-
-## Input Validation
-
-- Server-side price resolution on every order (client-submitted prices are ignored)
-- Name validation: 2–50 characters, letters only (including Bosnian characters)
-- Password strength enforced at registration
-- Order status restricted to `Pending`, `Approved`, `Declined`
