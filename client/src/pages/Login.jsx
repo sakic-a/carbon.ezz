@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // Google SVG icon
 const GoogleIcon = () => (
@@ -29,6 +29,7 @@ export default function Login() {
   const { login, register } = useAuth();
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -47,10 +48,11 @@ export default function Login() {
     if (result.success) {
       setSuccess(isRegister ? "Registration Successful!" : "Login Successful!");
       setTimeout(() => {
-        if (!isRegister && email === "admin@admin.com") {
+        if (!isRegister && result.user?.role === "admin") {
           navigate("/admin");
         } else {
-          navigate("/shop");
+          const redirectTo = searchParams.get("redirect") || "/shop";
+          navigate(redirectTo);
         }
       }, 1500);
     } else {
@@ -59,11 +61,11 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = "http://localhost:5001/api/auth/google";
   };
 
   const handleFacebookLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/facebook";
+    window.location.href = "http://localhost:5001/api/auth/facebook";
   };
 
   const labels = {
@@ -111,8 +113,9 @@ export default function Login() {
             </button>
             <button
               type="button"
-              onClick={handleFacebookLogin}
-              className="w-full flex items-center justify-center gap-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm shadow-sm"
+              disabled
+              title="Coming soon"
+              className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-gray-50 text-gray-400 font-semibold py-2.5 px-4 rounded-lg text-sm cursor-not-allowed opacity-60"
             >
               <FacebookIcon />
               {lbl("facebookBtn")}
@@ -140,6 +143,11 @@ export default function Login() {
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
+                {name.length > 0 && !/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]{2,50}$/.test(name) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    • Only letters allowed, 2-50 characters
+                  </p>
+                )}
               </div>
             )}
             <div>
@@ -154,6 +162,7 @@ export default function Login() {
                 placeholder="email@example.com"
                 required
               />
+
             </div>
             <div>
               <label className="block mb-1 font-medium text-sm text-gray-700">
@@ -166,6 +175,25 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {isRegister && (
+                <ul className="text-xs text-gray-500 mt-2 space-y-1">
+                  <li className={password.length >= 8 ? "text-green-500" : ""}>
+                    {password.length >= 8 ? "✓" : "•"} At least 8 characters
+                  </li>
+                  <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>
+                    {/[A-Z]/.test(password) ? "✓" : "•"} One uppercase letter
+                  </li>
+                  <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>
+                    {/[a-z]/.test(password) ? "✓" : "•"} One lowercase letter
+                  </li>
+                  <li className={/\d/.test(password) ? "text-green-500" : ""}>
+                    {/\d/.test(password) ? "✓" : "•"} One number
+                  </li>
+                  <li className={/[!@#$%^&*]/.test(password) ? "text-green-500" : ""}>
+                    {/[!@#$%^&*]/.test(password) ? "✓" : "•"} One special character (!@#$%^&*)
+                  </li>
+                </ul>
+              )}
             </div>
             <button
               type="submit"

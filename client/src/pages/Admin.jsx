@@ -3,17 +3,21 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2 } from 'lucide-react';
+import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 export default function Admin() {
-    const { user } = useAuth();
-    const { t } = useLanguage();
+    const { user, getToken } = useAuth();
+    const wrapText = (text, every = 95) =>
+        text.replace(new RegExp(`(.{${every}})`, "g"), "$1\n");
+    const { t, lang } = useLanguage();
     const { products, addProduct, updateProduct, deleteProduct } = useShop();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [messages, setMessages] = useState([]);
+    const [inquiries, setInquiries] = useState([]);
     const [activeTab, setActiveTab] = useState('orders');
     const [pName, setPName] = useState('');
+    const [pNameBs, setPNameBs] = useState('');
     const [pPrice, setPPrice] = useState('');
     const [pCategory, setPCategory] = useState('accessories');
     const [pImage, setPImage] = useState('');
@@ -25,24 +29,45 @@ export default function Admin() {
         if (!storedUser || storedUser.role !== 'admin') {
             navigate('/login');
         }
-        fetch('http://localhost:5000/api/admin/orders')
+        fetch('http://localhost:5001/api/admin/orders', {
+            headers: {
+                "Authorization": `Bearer ${getToken()}`,
+            }
+        })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch('http://localhost:5000/api/admin/messages')
+        fetch('http://localhost:5001/api/admin/messages', {
+            headers: {
+                 "Authorization": `Bearer ${getToken()}`,
+            }
+        })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setMessages(data);
             })
             .catch(err => console.error("Failed to load messages", err));
+        fetch('http://localhost:5001/api/admin/configurator-inquiries', {
+            headers: {
+                 "Authorization": `Bearer ${getToken()}`,
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setInquiries(data);
+            })
+            .catch(err => console.error("Failed to load configurator inquiries", err));
     }, [navigate]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
-            await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+            await fetch(`http://localhost:5001/api/orders/${orderId}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`, 
+                },
                 body: JSON.stringify({ status })
             });
             setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
@@ -56,7 +81,7 @@ export default function Admin() {
         if (editingProductId) {
             updateProduct(editingProductId, {
                 name: pName,
-                nameBs: pName,
+                nameBs: pNameBs,
                 price: parseFloat(pPrice),
                 category: pCategory,
                 image: pImage,
@@ -67,7 +92,7 @@ export default function Admin() {
         } else {
             addProduct({
                 name: pName,
-                nameBs: pName,
+                nameBs: pNameBs,
                 price: parseFloat(pPrice),
                 category: pCategory,
                 image: pImage,
@@ -76,15 +101,21 @@ export default function Admin() {
             });
         }
         setPName('');
+        setPNameBs('');
         setPPrice('');
         setPDescription('');
         setPGallery('');
+        setPImage('');
+        setPCategory('accessories');
     };
     const handleReply = async (msgId, replyText) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/messages/${msgId}/reply`, {
+            const res = await fetch(`http://localhost:5001/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json' ,
+                    'Authorization': `Bearer ${getToken()}`, 
+                },
                 body: JSON.stringify({ reply: replyText })
             });
             const data = await res.json();
@@ -93,6 +124,41 @@ export default function Admin() {
             }
         } catch (err) {
             console.error("Failed to reply", err);
+        }
+    };
+    const handleDeleteInquiry = async (inquiryId) => {
+        if (!window.confirm(t('faq', 'confirmDelete') || "Are you sure you want to delete this inquiry?")) return;
+        try {
+            const res = await fetch(`http://localhost:5001/api/admin/configurator-inquiries/${inquiryId}`, {
+                method: 'DELETE',
+                headers: { 
+                    'Authorization': `Bearer ${getToken()}`, 
+                }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setInquiries(inquiries.filter(i => i.id !== inquiryId));
+            }
+        } catch (err) {
+            console.error("Failed to delete inquiry", err);
+        }
+    };
+    const handleInquiryReply = async (inqId, replyText) => {
+        try {
+            const res = await fetch(`http://localhost:5001/api/admin/configurator-inquiries/${inqId}/reply`, {
+                method: 'PATCH',
+                headers: { 
+                    'Content-Type': 'application/json' ,
+                    'Authorization': `Bearer ${getToken()}`, 
+                },
+                body: JSON.stringify({ reply: replyText })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setInquiries(inquiries.map(i => i.id === inqId ? { ...i, reply: replyText } : i));
+            }
+        } catch (err) {
+            console.error("Failed to reply to configurator inquiry", err);
         }
     };
     if (!user || user.role !== 'admin') return null;
@@ -113,6 +179,12 @@ export default function Admin() {
                             onClick={() => setActiveTab('products')}
                         >
                             <ShoppingBag size={20} /> {t('admin', 'products')}
+                        </button>
+                        <button
+                            className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'inquiries' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                            onClick={() => setActiveTab('inquiries')}
+                        >
+                            <Sliders size={20} /> {t('admin', 'inquiries')}
                         </button>
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'messages' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -144,7 +216,7 @@ export default function Admin() {
                                             <tbody>
                                                 {orders.map(order => (
                                                     <tr key={order.id} className="border-b border-gray-100 last:border-0">
-                                                        <td className="p-3">{new Date(order.date).toLocaleDateString()}</td>
+                                                        <td className="p-3">{order.created_at ? new Date(order.created_at).toLocaleDateString("en-GB") : "—"}</td>
                                                         <td className="p-3 font-medium">{order.user}</td>
                                                         <td className="p-3">€{Number(order.total).toFixed(2)}</td>
                                                         <td className="p-3 text-sm text-gray-600">
@@ -200,8 +272,12 @@ export default function Admin() {
                                     <h3 className="font-bold mb-4">{editingProductId ? 'Edit Product' : t('admin', 'addProduct')}</h3>
                                     <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')}</label>
+                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')} (EN)</label>
                                             <input className="w-full p-2 border rounded" value={pName} onChange={(e) => setPName(e.target.value)} required />
+                                        </div>
+                                        <div>
+                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')} (BS)</label>
+                                            <input className="w-full p-2 border rounded" value={pNameBs} onChange={(e) => setPNameBs(e.target.value)} required />
                                         </div>
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productPrice')}</label>
@@ -241,10 +317,12 @@ export default function Admin() {
                                                 <button type="button" onClick={() => {
                                                     setEditingProductId(null);
                                                     setPName('');
+                                                    setPNameBs('');
                                                     setPPrice('');
                                                     setPDescription('');
                                                     setPGallery('');
                                                     setPImage('');
+                                                    setPCategory('accessories');
                                                 }} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
                                                     Cancel
                                                 </button>
@@ -257,13 +335,14 @@ export default function Admin() {
                                         <div key={p.id} className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
                                             <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
                                             <div className="flex-1">
-                                                <div className="font-bold">{p.name}</div>
+                                                <div className="font-bold">{lang === "bs" ? (p.nameBs || p.name) : p.name}</div>
                                                 <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} - {p.category}</div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button onClick={() => {
                                                     setEditingProductId(p.id);
                                                     setPName(p.name);
+                                                    setPNameBs(p.nameBs || '');
                                                     setPPrice(p.price);
                                                     setPCategory(p.category);
                                                     setPImage(p.image);
@@ -293,17 +372,17 @@ export default function Admin() {
                                             <div key={msg.id} className="border border-gray-200 rounded p-4">
                                                 <div className="flex justify-between mb-2">
                                                     <strong className="text-primary">{msg.name}</strong>
-                                                    <span className="text-sm text-gray-400">{new Date(msg.date).toLocaleDateString()}</span>
+                                                    <span className="text-sm text-gray-400">{msg.created_at ? new Date(msg.created_at).toLocaleDateString("en-GB") : "—"}</span>
                                                 </div>
                                                 <div className="text-sm text-gray-500 mb-3">
                                                     {msg.email}
                                                     {msg.phone && <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{msg.phone}</span>}
                                                 </div>
-                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4">{msg.message}</p>
+                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4 whitespace-pre-wrap">{wrapText(msg.message)}</p>
                                                 {msg.reply ? (
                                                     <div className="bg-green-50 p-3 rounded border border-green-100 ml-8">
                                                         <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
-                                                        <p className="text-green-900">{msg.reply}</p>
+                                                        <p className="text-green-900 whitespace-pre-wrap">{wrapText(msg.reply)}</p>
                                                     </div>
                                                 ) : (
                                                     <div className="flex gap-2 mt-2">
@@ -323,6 +402,115 @@ export default function Admin() {
                                                             onClick={(e) => {
                                                                 const input = e.target.previousSibling;
                                                                 handleReply(msg.id, input.value);
+                                                                input.value = '';
+                                                            }}
+                                                        >
+                                                            Send
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {activeTab === 'inquiries' && (
+                            <div>
+                                <h2 className="text-xl font-bold mb-6">{t('admin', 'inquiries')}</h2>
+                                {inquiries.length === 0 ? (
+                                    <p className="text-gray-500">{t('admin', 'noInquiries')}</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {inquiries.map(inq => (
+                                            <div key={inq.id} className="border border-gray-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow relative">
+                                                <button
+                                                    onClick={() => handleDeleteInquiry(inq.id)}
+                                                    className="absolute top-4 right-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
+                                                    title={t('admin', 'delete')}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+
+                                                <div className="flex flex-col md:flex-row justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
+                                                    <div>
+                                                        <h3 className="font-extrabold text-lg text-black">{inq.name}</h3>
+                                                        <p className="text-sm text-gray-500">{inq.email} {inq.phone && <span className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{inq.phone}</span>}</p>
+                                                    </div>
+                                                    <div className="text-right md:text-right text-sm text-gray-400 font-semibold self-start md:self-center">
+                                                        {new Date(inq.created_at).toLocaleString()}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 text-sm mb-4">
+                                                    <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-xs">Specification:</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 capitalize">
+                                                        <div><span className="font-semibold">Model:</span> {inq.selected_model}</div>
+                                                        <div><span className="font-semibold">Car Model:</span> {inq.car_model}</div>
+                                                        <div><span className="font-semibold">Shape:</span> {t('configurator', inq.wheel_shape) || inq.wheel_shape}</div>
+                                                        <div><span className="font-semibold">Top Grip:</span> {t('configurator', inq.top_material) || inq.top_material}</div>
+                                                        <div><span className="font-semibold">Side Grips:</span> {t('configurator', inq.side_material) || inq.side_material}</div>
+                                                        <div><span className="font-semibold">Bottom Grip:</span> {t('configurator', inq.bottom_material) || inq.bottom_material}</div>
+                                                        <div>
+                                                            <span className="font-semibold">Stitching:</span>{" "}
+                                                            <span className="inline-flex items-center gap-1.5 font-medium text-black">
+                                                                <span 
+                                                                    className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                                                                    style={{ 
+                                                                        backgroundColor: inq.thread_colour === 'white' ? '#ffffff' : 
+                                                                                        inq.thread_colour === 'black' ? '#000000' : inq.thread_colour 
+                                                                    }}
+                                                                />
+                                                                {inq.thread_colour}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col-span-2 md:col-span-3">
+                                                            <span className="font-semibold">Ring:</span>{" "}
+                                                            {inq.ring_enabled ? (
+                                                                <span className="inline-flex items-center gap-1.5 font-medium text-black">
+                                                                    <span 
+                                                                        className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                                                                        style={{ backgroundColor: inq.ring_colour }}
+                                                                    />
+                                                                    {inq.ring_colour}
+                                                                </span>
+                                                            ) : (
+                                                                "No Ring"
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {inq.notes && (
+                                                    <div className="bg-yellow-50/50 rounded-xl p-4 border border-yellow-100 text-sm">
+                                                        <h4 className="font-bold text-yellow-800 mb-1 uppercase tracking-wider text-xs">Customer Notes:</h4>
+                                                        <p className="text-gray-700 italic">"{inq.notes}"</p>
+                                                    </div>
+                                                )}
+
+                                                {inq.reply ? (
+                                                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 mt-4">
+                                                        <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
+                                                        <p className="text-green-900">{inq.reply}</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-2 mt-4">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Type a price offer or reply..."
+                                                            className="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-black"
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    handleInquiryReply(inq.id, e.target.value);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
+                                                        />
+                                                        <button
+                                                            className="bg-primary text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-yellow-400"
+                                                            onClick={(e) => {
+                                                                const input = e.target.previousSibling;
+                                                                handleInquiryReply(inq.id, input.value);
                                                                 input.value = '';
                                                             }}
                                                         >

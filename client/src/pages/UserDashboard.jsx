@@ -25,10 +25,10 @@ import {
   Star,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "http://localhost:5001/api";
 
 export default function UserDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
   const { cart, removeFromCart } = useShop();
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
@@ -51,6 +51,8 @@ export default function UserDashboard() {
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [msgText, setMsgText] = useState("");
   const [msgPhone, setMsgPhone] = useState("");
+  const [msgName, setMsgName] = useState("");
+  const [msgEmail, setMsgEmail] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState("");
 
@@ -66,7 +68,9 @@ export default function UserDashboard() {
   const fetchOrders = () => {
     if (!user) return;
     setOrdersLoading(true);
-    fetch(`${API}/orders/user/${encodeURIComponent(user.email)}`)
+    fetch(`${API}/orders/user/${encodeURIComponent(user.email)}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
       .then((r) => r.json())
       .then((data) => {
         setOrders(Array.isArray(data) ? data : []);
@@ -82,7 +86,9 @@ export default function UserDashboard() {
   useEffect(() => {
     if (!user) return;
     setMessagesLoading(true);
-    fetch(`${API}/messages/user/${encodeURIComponent(user.email)}`)
+    fetch(`${API}/messages/user/${encodeURIComponent(user.email)}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
       .then((r) => r.json())
       .then((data) => {
         setMessages(Array.isArray(data) ? data : []);
@@ -131,8 +137,8 @@ export default function UserDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: user.name,
-          email: user.email,
+          name: msgName,
+          email: msgEmail,
           phone: msgPhone,
           message: msgText,
         }),
@@ -141,8 +147,11 @@ export default function UserDashboard() {
         setMsgSuccess(td("messageSent"));
         setMsgText("");
         setMsgPhone("");
+        setMsgName("");
+        setMsgEmail("");
         const updated = await fetch(
-          `${API}/messages/user/${encodeURIComponent(user.email)}`
+          `${API}/messages/user/${encodeURIComponent(user.email)}`,
+          { headers: { Authorization: `Bearer ${getToken()}` } }
         ).then((r) => r.json());
         setMessages(Array.isArray(updated) ? updated : []);
       }
@@ -185,12 +194,11 @@ export default function UserDashboard() {
       cart: "Cart", password: "Change Password", noOrders: "You have no orders yet.",
       orderDate: "Date", orderTotal: "Total", orderStatus: "Status", orderItems: "Items",
       viewDetails: "View Details", hide: "Hide",
-      statusPending: "Pending", statusProcessing: "Processing",
-      statusShipped: "Shipped", statusDelivered: "Delivered",
+      statusPending: "Pending", statusApproved: "Approved", statusDeclined: "Declined",
       sendMessage: "Send a Message", yourMessages: "Your Inquiries",
       noMessages: "You haven't sent any messages yet.",
       adminReply: "Reply from Carbon.ez:", noReply: "Awaiting reply...",
-      name: "Full Name", email: "Email", phone: "Phone (optional)", message: "Message",
+      name: "Full Name", email: "Email", phone: "Phone Number", message: "Message",
       send: "Send", messageSent: "Message sent successfully!",
       cartEmpty: "Your cart is empty.", cartTotal: "Total",
       goToCart: "Go to Checkout", remove: "Remove",
@@ -201,7 +209,7 @@ export default function UserDashboard() {
       pwMismatch: "New passwords do not match.", pwTooShort: "Password must be at least 6 characters.",
       logout: "Logout", hello: "Hello",
       orderSuccessBanner: "Your order was placed successfully!",
-      filterAll: "All", filterPending: "Pending",  filterDelivered: "Delivered",
+      filterAll: "All", filterPending: "Pending", filterApproved: "Approved", filterDeclined: "Declined",
       searchOrders: "Search orders...", 
       memberSince: "Member since",
       refresh: "Refresh Orders",
@@ -211,12 +219,11 @@ export default function UserDashboard() {
       cart: "Korpa", password: "Promjena Šifre", noOrders: "Nemate narudžbi.",
       orderDate: "Datum", orderTotal: "Ukupno", orderStatus: "Status", orderItems: "Artikli",
       viewDetails: "Detalji", hide: "Sakrij",
-      statusPending: "Na čekanju", statusProcessing: "U obradi",
-      statusShipped: "Poslano", statusDelivered: "Dostavljeno",
+      statusPending: "Na čekanju", statusApproved: "Odobreno", statusDeclined: "Odbijeno",
       sendMessage: "Pošalji Poruku", yourMessages: "Vaši Upiti",
       noMessages: "Niste poslali nijedan upit.",
       adminReply: "Odgovor Carbon.ez:", noReply: "Čeka se odgovor...",
-      name: "Ime i Prezime", email: "Email", phone: "Telefon (opcionalno)", message: "Poruka",
+      name: "Ime i Prezime", email: "Email", phone: "Broj telefona", message: "Poruka",
       send: "Pošalji", messageSent: "Poruka uspješno poslana!",
       cartEmpty: "Vaša korpa je prazna.", cartTotal: "Ukupno",
       goToCart: "Idi na Plaćanje", remove: "Ukloni",
@@ -227,8 +234,7 @@ export default function UserDashboard() {
       pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati najmanje 6 znakova.",
       logout: "Odjava", hello: "Zdravo",
       orderSuccessBanner: "Vaša narudžba je uspješno primljena!",
-      filterAll: "Sve", filterPending: "Na čekanju", 
-     filterDelivered: "Dostavljeno",
+      filterAll: "Sve", filterPending: "Na čekanju", filterApproved: "Odobreno", filterDeclined: "Odbijeno",
       searchOrders: "Pretraži narudžbe...", 
        memberSince: "Član od",
       refresh: "Osvježi narudžbe",
@@ -237,27 +243,38 @@ export default function UserDashboard() {
 
   const td = (key) => dashTrans[lang]?.[key] ?? dashTrans.en[key];
 
+  const wrapText = (text, every = 95) =>
+    text.replace(new RegExp(`(.{${every}})`, "g"), "$1\n");
+
+  const formatDate = (value) => {
+    if (!value) return "—";
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-GB");
+  };
+
   const statusIcon = (status) => {
     switch (status) {
-      case "delivered": return <CheckCircle size={14} className="inline mr-1" />;
-      case "pending": return <Package size={14} className="inline mr-1" />;
+      case "Approved": return <CheckCircle size={14} className="inline mr-1" />;
+      case "Declined": return <AlertCircle size={14} className="inline mr-1" />;
       default: return <Clock size={14} className="inline mr-1" />;
     }
   };
 
   const statusColor = (status) => {
     switch (status) {
-      case "delivered": return "bg-green-100 text-green-700";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-600";
+      case "Approved": return "bg-green-100 text-green-700";
+      case "Declined": return "bg-red-100 text-red-700";
+      default: return "bg-yellow-100 text-yellow-800";
     }
   };
 
   const statusLabel = (status) => {
     const map = {
-      pending: td("statusPending"), delivered: td("statusDelivered"),
+      Pending: td("statusPending"),
+      Approved: td("statusApproved"),
+      Declined: td("statusDeclined"),
     };
-    return map[status] ?? status;
+    return map[status] ?? status ?? td("statusPending");
   };
 
  
@@ -304,7 +321,7 @@ export default function UserDashboard() {
             <p className="text-gray-500 text-sm mt-1">{user.email}</p>
           </div>
           <button
-            onClick={() => { logout(); navigate("/"); }}
+            onClick={() => { logout(); navigate("/dashboard"); }}
             className="text-sm font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1"
           >
             <X size={16} /> {td("logout")}
@@ -352,7 +369,7 @@ export default function UserDashboard() {
                   />
                 </div>
                 <div className="flex gap-1 flex-wrap">
-                  {["all", "pending", "delivered"].map((f) => (
+                  {["all", "Pending", "Approved", "Declined"].map((f) => (
                     <button
                       key={f}
                       onClick={() => setOrderFilter(f)}
@@ -362,7 +379,7 @@ export default function UserDashboard() {
                           : "bg-white border border-gray-200 text-gray-500 hover:border-primary"
                       }`}
                     >
-                      {td(`filter${f.charAt(0).toUpperCase() + f.slice(1)}`)}
+                      {td(`filter${f === "all" ? "All" : f}`)}
                     </button>
                   ))}
                 </div>
@@ -401,7 +418,7 @@ export default function UserDashboard() {
                         Order #{order.id}
                       </span>
                       <span className="text-gray-400 text-xs">
-                        {new Date(order.created_at).toLocaleDateString()}
+                        {formatDate(order.created_at)}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -504,33 +521,44 @@ export default function UserDashboard() {
               )}
               <form onSubmit={handleSendMessage} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{td("phone")}</label>
-                    <input
-                      type="tel"
-                      className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                      value={msgPhone}
-                      onChange={(e) => setMsgPhone(e.target.value)}
-                      placeholder={td("phone")}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{td("message")}</label>
-                  <textarea
-                    rows={4}
-                    maxLength={500}
-                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none"
-                    value={msgText}
-                    onChange={(e) => setMsgText(e.target.value)}
+                  <input
+                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    placeholder={td("name")}
+                    value={msgName}
+                    onChange={(e) => setMsgName(e.target.value)}
                     required
                   />
-                  <p className="text-xs text-gray-400 text-right mt-1">{msgText.length}/500</p>
+                  <input
+                    type="email"
+                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    placeholder={td("email")}
+                    value={msgEmail}
+                    onChange={(e) => setMsgEmail(e.target.value)}
+                    required
+                  />
+                  <input
+                    type="tel"
+                    className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none sm:col-span-2"
+                    placeholder={td("phone")}
+                    value={msgPhone}
+                    onChange={(e) => setMsgPhone(e.target.value)}
+                    required
+                  />
                 </div>
+                <textarea
+                  rows={5}
+                  maxLength={500}
+                  className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none"
+                  placeholder={td("message")}
+                  value={msgText}
+                  onChange={(e) => setMsgText(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-gray-400 text-right -mt-2">{msgText.length}/500</p>
                 <button
                   type="submit"
                   disabled={msgSending}
-                  className="bg-primary text-black px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-yellow-400 transition-colors disabled:opacity-60 flex items-center gap-2"
+                  className="w-full bg-primary text-black py-2.5 rounded-lg font-bold text-sm hover:bg-yellow-400 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   <Send size={15} />
                   {msgSending ? "..." : td("send")}
@@ -552,9 +580,9 @@ export default function UserDashboard() {
                   {messages.map((msg) => (
                     <div key={msg.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm text-black font-medium leading-snug break-words">{msg.message}</p>
+                        <p className="text-sm text-black font-medium leading-snug whitespace-pre-wrap">{wrapText(msg.message)}</p>
                         <span className="text-xs text-gray-400 whitespace-nowrap">
-                          {new Date(msg.created_at).toLocaleDateString()}
+                          {formatDate(msg.created_at)}
                         </span>
                       </div>
                       {msg.phone && (
@@ -564,7 +592,7 @@ export default function UserDashboard() {
                         {msg.reply ? (
                           <>
                             <p className="font-semibold text-xs text-gray-600 mb-1">{td("adminReply")}</p>
-                            <p className="text-gray-800 break-words">{msg.reply}</p>
+                            <p className="text-gray-800 whitespace-pre-wrap">{wrapText(msg.reply)}</p>
                           </>
                         ) : (
                           <p className="flex items-center gap-1.5 italic">

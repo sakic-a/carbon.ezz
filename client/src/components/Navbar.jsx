@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Menu, X, Globe, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
@@ -9,6 +9,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { lang, toggleLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { cart } = useShop();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -31,6 +32,9 @@ export default function Navbar() {
           </Link>
           <Link to="/gallery" className="hover:text-primary transition-colors">
             {t("nav", "gallery")}
+          </Link>
+          <Link to="/configurator" className="hover:text-primary transition-colors">
+            {t("nav", "configurator")}
           </Link>
           <Link to="/about" className="hover:text-primary transition-colors">
             {t("nav", "about")}
@@ -82,7 +86,7 @@ export default function Navbar() {
 
           {user && (
             <button
-              onClick={logout}
+              onClick={() => { logout(); navigate("/login"); }}
               className="flex items-center text-secondary hover:text-primary transition-colors"
               title={t("nav", "logout")}
             >
@@ -121,6 +125,13 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
           >
             {t("nav", "gallery")}
+          </Link>
+          <Link
+            to="/configurator"
+            className="text-lg py-2 border-b border-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            {t("nav", "configurator")}
           </Link>
           <Link
             to="/about"
@@ -167,7 +178,7 @@ export default function Navbar() {
             )}
             {user && (
               <button
-                onClick={() => { logout(); setIsOpen(false); }}
+                onClick={() => { logout(); setIsOpen(false); navigate("/login"); }}
                 className="text-left font-semibold py-2 text-secondary"
               >
                 Logout

@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 const ShopContext = createContext();
+
 export function ShopProvider({ children }) {
+  const { getToken } = useAuth();
   const [cart, setCart] = useState([]);
   const [productsList, setProductsList] = useState([]);
   useEffect(() => {
@@ -8,7 +11,7 @@ export function ShopProvider({ children }) {
     if (storedCart) {
       setCart(JSON.parse(storedCart));
     }
-    fetch("http://localhost:5000/api/products")
+    fetch("http://localhost:5001/api/products")
       .then((res) => res.json())
       .then((data) => setProductsList(data))
       .catch((err) => console.error("Failed to load products", err));
@@ -35,9 +38,12 @@ export function ShopProvider({ children }) {
   const clearCart = () => setCart([]);
   const addProduct = async (product) => {
     try {
-      const response = await fetch("http://localhost:5000/api/products", {
+      const response = await fetch("http://localhost:5001/api/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json" ,
+           "Authorization": `Bearer ${getToken()}`, 
+        },
         body: JSON.stringify(product),
       });
       const newProduct = await response.json();
@@ -48,9 +54,12 @@ export function ShopProvider({ children }) {
   };
   const updateProduct = async (id, productData) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`http://localhost:5001/api/products/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json" ,
+          "Authorization": `Bearer ${getToken()}`, 
+        },
         body: JSON.stringify(productData),
       });
       const updatedProduct = await response.json();
@@ -61,8 +70,11 @@ export function ShopProvider({ children }) {
   };
   const deleteProduct = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/products/${id}`, {
+      await fetch(`http://localhost:5001/api/products/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${getToken()}`,
+        },
       });
       setProductsList((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
@@ -71,17 +83,13 @@ export function ShopProvider({ children }) {
   };
   const placeOrder = async (user, shippingDetails) => {
     try {
-      const response = await fetch("http://localhost:5000/api/orders", {
+      const response = await fetch("http://localhost:5001/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userEmail: user.email,
-          total: cart.reduce(
-            (acc, item) => acc + item.price * item.quantity,
-            0,
-          ),
           shipping: shippingDetails,
-          items: cart,
+          items: cart.map((item) => ({ id: item.id, quantity: item.quantity })),
         }),
       });
       if (!response.ok) throw new Error("Order failed");
@@ -94,12 +102,25 @@ export function ShopProvider({ children }) {
   };
   const sendMessage = async (contactData) => {
     try {
-      await fetch("http://localhost:5000/api/contact", {
+      await fetch("http://localhost:5001/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contactData),
       });
       return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+  const submitInquiry = async (inquiryData) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/configurator-inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inquiryData),
+      });
+      return response.ok;
     } catch (err) {
       console.error(err);
       return false;
@@ -118,6 +139,7 @@ export function ShopProvider({ children }) {
         updateProduct,
         deleteProduct,
         sendMessage,
+        submitInquiry,
       }}
     >
       {children}

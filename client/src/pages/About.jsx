@@ -78,11 +78,11 @@ export default function About() {
           </p>
           <div className="text-center mb-8 text-gray-500 text-sm">
             <p className="mb-1">
-              <strong className="text-gray-700">Address:</strong> Resada Kadica,
+              <strong className="text-gray-700">{t("faq", "addressLabel")}:</strong> Resada Kadica,
               Visoko, Bosnia and Herzegovina
             </p>
             <p>
-              <strong className="text-gray-700">Phone:</strong>{" "}
+              <strong className="text-gray-700">{t("faq", "phoneLabel")}:</strong>{" "}
               <a
                 href="tel:+38761353966"
                 className="text-primary hover:underline font-medium transition-colors"
@@ -111,7 +111,7 @@ export default function About() {
               <input
                 type="tel"
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary md:col-span-2"
-                placeholder="Phone Number"
+                placeholder={t("faq", "phone")}
                 value={cPhone}
                 onChange={(e) => setCPhone(e.target.value)}
                 required
