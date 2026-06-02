@@ -3,8 +3,58 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders } from 'lucide-react';
+import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders, Loader2, GripVertical } from 'lucide-react';
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, DragOverlay
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates,
+  verticalListSortingStrategy, useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIES } from '../data/categories';
+import { getImageUrl } from '../utils/imageUrl';
+function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? 'transform 220ms ease',
+    opacity: isDragging ? 0 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50"
+    >
+      {reorderMode && (
+        <button
+          className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing p-1 touch-none shrink-0 transition-colors"
+          title="Drag to reorder"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={20} />
+        </button>
+      )}
+      <img src={getImageUrl(p.image)} alt={p.name} className="w-12 h-12 object-cover rounded shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="font-bold truncate">{lang === 'bs' ? (p.nameBs || p.name) : p.name}</div>
+        <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} · {p.category}</div>
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <button onClick={() => onEdit(p)} className="text-blue-500 hover:bg-blue-50 p-2 rounded transition-colors">
+          <Edit2 size={20} />
+        </button>
+        <button onClick={() => onDelete(p.id)} className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors">
+          <Trash2 size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
     const { user, getToken } = useAuth();
     const wrapText = (text, every = 95) =>
@@ -22,8 +72,81 @@ export default function Admin() {
     const [pCategory, setPCategory] = useState('accessories');
     const [pImage, setPImage] = useState('');
     const [pDescription, setPDescription] = useState('');
-    const [pGallery, setPGallery] = useState('');
+    const [pGallery, setPGallery] = useState([]);
     const [editingProductId, setEditingProductId] = useState(null);
+    const [reorderMode, setReorderMode] = useState(false);
+    const [orderedProducts, setOrderedProducts] = useState([]);
+    const [activeId, setActiveId] = useState(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const [uploadingMain, setUploadingMain] = useState(false);
+    const [uploadingGallery, setUploadingGallery] = useState(false);
+    const [dragOverMain, setDragOverMain] = useState(false);
+    const [dragOverGallery, setDragOverGallery] = useState(false);
+
+    const handleMainImageUpload = async (file) => {
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File is too large! Maximum limit is 5MB.");
+            return;
+        }
+        setUploadingMain(true);
+        const formData = new FormData();
+        formData.append("image", file);
+        try {
+            const res = await fetch("http://localhost:5001/api/upload", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${getToken()}` },
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success) {
+                setPImage(data.imageUrl);
+            } else {
+                alert(data.error || "Failed to upload image.");
+            }
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("An error occurred during upload.");
+        } finally {
+            setUploadingMain(false);
+        }
+    };
+
+    const handleGalleryUpload = async (files) => {
+        if (!files || files.length === 0) return;
+        for (const file of files) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`File "${file.name}" is too large! Maximum limit is 5MB.`);
+                return;
+            }
+        }
+        setUploadingGallery(true);
+        const formData = new FormData();
+        files.forEach((file) => formData.append("gallery", file));
+        try {
+            const res = await fetch("http://localhost:5001/api/upload-gallery", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${getToken()}` },
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success) {
+                setPGallery((prev) => [...prev, ...data.imageUrls]);
+            } else {
+                alert(data.error || "Failed to upload gallery images.");
+            }
+        } catch (err) {
+            console.error("Gallery upload failed", err);
+            alert("An error occurred during gallery upload.");
+        } finally {
+            setUploadingGallery(false);
+        }
+    };
     useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (!storedUser || storedUser.role !== 'admin') {
@@ -75,9 +198,55 @@ export default function Admin() {
             console.error("Failed to update status", err);
         }
     };
+    useEffect(() => {
+        setOrderedProducts(products);
+    }, [products]);
+
+    const handleStartEdit = (p) => {
+        setEditingProductId(p.id);
+        setPName(p.name);
+        setPNameBs(p.nameBs || '');
+        setPPrice(p.price);
+        setPCategory(p.category);
+        setPImage(p.image);
+        setPDescription(p.description || '');
+        setPGallery(p.gallery || []);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDragStart = ({ active }) => setActiveId(active.id);
+
+    const handleDragEnd = ({ active, over }) => {
+        setActiveId(null);
+        if (!over || active.id === over.id) return;
+        setOrderedProducts(prev => {
+            const oldIndex = prev.findIndex(p => p.id === active.id);
+            const newIndex = prev.findIndex(p => p.id === over.id);
+            return arrayMove(prev, oldIndex, newIndex);
+        });
+    };
+
+    const handleSaveReorder = async () => {
+        try {
+            const res = await fetch('http://localhost:5001/api/products/reorder', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`,
+                },
+                body: JSON.stringify({ orderedIds: orderedProducts.map(p => p.id) }),
+            });
+            if (!res.ok) throw new Error(`${res.status}`);
+            setReorderMode(false);
+        } catch (err) {
+            console.error('Failed to save order', err);
+            alert('Failed to save order. Please try again.');
+        }
+    };
+
     const handleAddProduct = (e) => {
         e.preventDefault();
-        const galleryArray = pGallery ? pGallery.split(',').map(url => url.trim()).filter(url => url) : [];
+        const galleryArray = pGallery;
         if (editingProductId) {
             updateProduct(editingProductId, {
                 name: pName,
@@ -104,7 +273,7 @@ export default function Admin() {
         setPNameBs('');
         setPPrice('');
         setPDescription('');
-        setPGallery('');
+        setPGallery([]);
         setPImage('');
         setPCategory('accessories');
     };
@@ -170,7 +339,7 @@ export default function Admin() {
                     <div className="bg-white p-5 rounded-lg shadow-sm h-fit">
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'orders' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                            onClick={() => setActiveTab('orders')}
+                            onClick={() => { setActiveTab('orders'); setReorderMode(false); }}
                         >
                             <Package size={20} /> {t('admin', 'orders')}
                         </button>
@@ -182,13 +351,13 @@ export default function Admin() {
                         </button>
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'inquiries' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                            onClick={() => setActiveTab('inquiries')}
+                            onClick={() => { setActiveTab('inquiries'); setReorderMode(false); }}
                         >
                             <Sliders size={20} /> {t('admin', 'inquiries')}
                         </button>
                         <button
                             className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'messages' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                            onClick={() => setActiveTab('messages')}
+                            onClick={() => { setActiveTab('messages'); setReorderMode(false); }}
                         >
                             <MessageSquare size={20} /> {t('admin', 'messages')}
                         </button>
@@ -269,7 +438,7 @@ export default function Admin() {
                             <div>
                                 <h2 className="text-xl font-bold mb-6">{t('admin', 'products')}</h2>
                                 <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8">
-                                    <h3 className="font-bold mb-4">{editingProductId ? 'Edit Product' : t('admin', 'addProduct')}</h3>
+                                    <h3 className="font-bold mb-4">{editingProductId ? t('admin', 'editProduct') : t('admin', 'addProduct')}</h3>
                                     <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')} (EN)</label>
@@ -281,7 +450,19 @@ export default function Admin() {
                                         </div>
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productPrice')}</label>
-                                            <input type="number" step="0.01" className="w-full p-2 border rounded" value={pPrice} onChange={(e) => setPPrice(e.target.value)} required />
+                                            <div className="relative rounded-lg shadow-sm">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span className="text-gray-500 sm:text-sm">€</span>
+                                                </div>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    className="w-full pl-8 p-2 border rounded outline-none focus:border-primary transition-colors" 
+                                                    value={pPrice} 
+                                                    onChange={(e) => setPPrice(e.target.value)} 
+                                                    required 
+                                                />
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productCategory')}</label>
@@ -292,73 +473,190 @@ export default function Admin() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productImage')}</label>
-                                            <input className="w-full p-2 border rounded" value={pImage} onChange={e => setPImage(e.target.value)} required />
+                                            <label className="block mb-2 text-sm font-bold text-gray-700">{t('admin', 'productImage')}</label>
+                                            <div className="mt-1 flex flex-col items-start">
+                                                {pImage ? (
+                                                    <div className="relative group w-full max-w-[200px] h-[150px] rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                                                        <img
+                                                            src={getImageUrl(pImage)}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPImage("")}
+                                                                className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all duration-200 scale-90 group-hover:scale-100"
+                                                                title="Remove Image"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label
+                                                        className={`w-full max-w-[250px] h-[140px] flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all group ${dragOverMain ? 'border-primary bg-yellow-50/40 scale-[1.02]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
+                                                        onDragOver={(e) => { e.preventDefault(); setDragOverMain(true); }}
+                                                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverMain(false); }}
+                                                        onDrop={(e) => { e.preventDefault(); setDragOverMain(false); handleMainImageUpload(e.dataTransfer.files[0]); }}
+                                                    >
+                                                        {uploadingMain ? (
+                                                            <div className="flex flex-col items-center justify-center">
+                                                                <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                                                                <span className="text-xs text-gray-500 font-medium">{t('admin', 'uploadingImage')}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex flex-col items-center justify-center p-4 text-center">
+                                                                <Plus className={`w-8 h-8 transition-colors mb-2 ${dragOverMain ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`} />
+                                                                <span className={`text-sm font-semibold transition-colors ${dragOverMain ? 'text-primary' : 'text-gray-700 group-hover:text-primary'}`}>{dragOverMain ? 'Drop to upload' : t('admin', 'chooseMainImage')}</span>
+                                                                <span className="text-xs text-gray-400 mt-1">{t('admin', 'maxSizeNotice')}</span>
+                                                            </div>
+                                                        )}
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            disabled={uploadingMain}
+                                                            onChange={(e) => handleMainImageUpload(e.target.files[0])}
+                                                            required
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block mb-1 text-sm font-medium">Additional Images (Gallery)</label>
-                                            <input
-                                                className="w-full p-2 border rounded"
-                                                placeholder="Paste image links separated by comma..."
-                                                value={pGallery}
-                                                onChange={e => setPGallery(e.target.value)}
-                                            />
-                                            <p className="text-xs text-gray-400 mt-1"></p>
+                                            <label className="block mb-2 text-sm font-bold text-gray-700">{t('admin', 'productGallery')}</label>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                                {pGallery.map((img, idx) => (
+                                                    <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                                                        <img
+                                                            src={getImageUrl(img)}
+                                                            alt={`Gallery preview ${idx}`}
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setPGallery(pGallery.filter((_, i) => i !== idx));
+                                                                }}
+                                                                className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-all duration-200 scale-90 group-hover:scale-100"
+                                                                title="Delete Image"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {uploadingGallery && (
+                                                    <div className="aspect-square flex flex-col items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+                                                        <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
+                                                        <span className="text-[10px] text-gray-400">{t('admin', 'uploading')}</span>
+                                                    </div>
+                                                )}
+
+                                                {pGallery.length < 10 && !uploadingGallery && (
+                                                    <label
+                                                        className={`aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all group ${dragOverGallery ? 'border-primary bg-yellow-50/40 scale-[1.04]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
+                                                        onDragOver={(e) => { e.preventDefault(); setDragOverGallery(true); }}
+                                                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverGallery(false); }}
+                                                        onDrop={(e) => { e.preventDefault(); setDragOverGallery(false); handleGalleryUpload(Array.from(e.dataTransfer.files)); }}
+                                                    >
+                                                        <Plus className={`w-6 h-6 transition-colors ${dragOverGallery ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`} />
+                                                        <span className={`text-xs font-semibold transition-colors mt-1 ${dragOverGallery ? 'text-primary' : 'text-gray-700 group-hover:text-primary'}`}>{dragOverGallery ? 'Drop here' : t('admin', 'addImage')}</span>
+                                                        <input
+                                                            type="file"
+                                                            multiple
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={(e) => handleGalleryUpload(Array.from(e.target.files))}
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block mb-1 text-sm font-medium">Description</label>
-                                            <textarea className="w-full p-2 border rounded h-24" value={pDescription} onChange={e => setPDescription(e.target.value)} placeholder="Product details..."></textarea>
+                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'description')}</label>
+                                            <textarea className="w-full p-2 border rounded h-24" value={pDescription} onChange={e => setPDescription(e.target.value)} placeholder={t('admin', 'productDetailsPlaceholder')}></textarea>
                                         </div>
                                         <div className="md:col-span-2 flex gap-2">
-                                            <button type="submit" className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded hover:bg-secondary">
-                                                {editingProductId ? <Edit2 size={18} /> : <Plus size={18} />} {editingProductId ? 'Update' : t('admin', 'save')}
+                                            <button 
+                                                type="submit" 
+                                                disabled={uploadingMain || uploadingGallery}
+                                                className="flex items-center gap-2 bg-primary text-black font-bold px-5 py-2 rounded-xl hover:bg-yellow-400 disabled:opacity-50 transition-colors"
+                                            >
+                                                {editingProductId ? <Edit2 size={18} /> : <Plus size={18} />} {editingProductId ? t('admin', 'update') : t('admin', 'save')}
                                             </button>
                                             {editingProductId && (
-                                                <button type="button" onClick={() => {
-                                                    setEditingProductId(null);
-                                                    setPName('');
-                                                    setPNameBs('');
-                                                    setPPrice('');
-                                                    setPDescription('');
-                                                    setPGallery('');
-                                                    setPImage('');
-                                                    setPCategory('accessories');
-                                                }} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                                                    Cancel
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        setEditingProductId(null);
+                                                        setPName('');
+                                                        setPNameBs('');
+                                                        setPPrice('');
+                                                        setPDescription('');
+                                                        setPGallery([]);
+                                                        setPImage('');
+                                                        setPCategory('accessories');
+                                                    }} 
+                                                    className="bg-gray-200 text-gray-700 font-semibold px-5 py-2 rounded-xl hover:bg-gray-300 transition-colors"
+                                                >
+                                                    {t('admin', 'cancel')}
                                                 </button>
                                             )}
                                         </div>
                                     </form>
                                 </div>
-                                <div className="space-y-3">
-                                    {products.map(p => (
-                                        <div key={p.id} className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                                            <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                                            <div className="flex-1">
-                                                <div className="font-bold">{lang === "bs" ? (p.nameBs || p.name) : p.name}</div>
-                                                <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} - {p.category}</div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => {
-                                                    setEditingProductId(p.id);
-                                                    setPName(p.name);
-                                                    setPNameBs(p.nameBs || '');
-                                                    setPPrice(p.price);
-                                                    setPCategory(p.category);
-                                                    setPImage(p.image);
-                                                    setPDescription(p.description || '');
-                                                    setPGallery((p.gallery || []).join(', '));
-                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                }} className="text-blue-500 hover:bg-blue-50 p-2 rounded">
-                                                    <Edit2 size={20} />
-                                                </button>
-                                                <button onClick={() => deleteProduct(p.id)} className="text-red-500 hover:bg-red-50 p-2 rounded">
-                                                    <Trash2 size={20} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="flex justify-end mb-4">
+                                    <button
+                                        onClick={() => reorderMode ? handleSaveReorder() : setReorderMode(true)}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${reorderMode ? 'bg-primary text-black shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        <GripVertical size={15} />
+                                        {reorderMode ? t('admin', 'reorderDone') : t('admin', 'reorder')}
+                                    </button>
                                 </div>
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragStart={handleDragStart}
+                                    onDragEnd={handleDragEnd}
+                                >
+                                    <SortableContext
+                                        items={orderedProducts.map(p => p.id)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        <div className="divide-y divide-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                                            {orderedProducts.map(p => (
+                                                <SortableProductRow
+                                                    key={p.id}
+                                                    p={p}
+                                                    lang={lang}
+                                                    reorderMode={reorderMode}
+                                                    onEdit={handleStartEdit}
+                                                    onDelete={deleteProduct}
+                                                />
+                                            ))}
+                                        </div>
+                                    </SortableContext>
+                                    <DragOverlay dropAnimation={{ duration: 180, easing: 'ease' }}>
+                                        {activeId ? (() => {
+                                            const p = orderedProducts.find(x => x.id === activeId);
+                                            return p ? (
+                                                <div className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-2xl border-2 border-primary">
+                                                    <GripVertical size={20} className="text-primary shrink-0" />
+                                                    <img src={getImageUrl(p.image)} alt={p.name} className="w-12 h-12 object-cover rounded shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-bold truncate">{lang === 'bs' ? (p.nameBs || p.name) : p.name}</div>
+                                                        <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} · {p.category}</div>
+                                                    </div>
+                                                </div>
+                                            ) : null;
+                                        })() : null}
+                                    </DragOverlay>
+                                </DndContext>
                             </div>
                         )}
                         {activeTab === 'messages' && (

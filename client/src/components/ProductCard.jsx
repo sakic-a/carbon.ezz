@@ -4,6 +4,8 @@ import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
+import { getImageUrl } from "../utils/imageUrl";
+
 export default function ProductCard({ product }) {
   const { addToCart } = useShop();
   const { lang, t } = useLanguage();
@@ -23,7 +25,7 @@ export default function ProductCard({ product }) {
         className="block h-[350px] overflow-hidden relative"
       >
         <img
-          src={product.image}
+          src={getImageUrl(product.image)}
           alt={name}
           className="w-full h-full object-cover"
         />

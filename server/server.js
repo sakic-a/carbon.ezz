@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const jwt = require("jsonwebtoken");
 
@@ -12,8 +14,19 @@ require("./config/passport");
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER")
+  .catch(err => console.error("Migration error:", err.message));
+
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+// Serve uploads statically
+app.use("/uploads", express.static(uploadsDir));
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -48,6 +61,10 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Mount image upload routes
+const uploadRoutes = require("./routes/uploadRoutes")(authenticateToken, requireAdmin);
+app.use("/api", uploadRoutes);
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
@@ -93,7 +110,7 @@ app.get("/api/products", async (req, res) => {
       FROM products p
       LEFT JOIN product_images pi ON p.id = pi.product_id
       GROUP BY p.id
-      ORDER BY p.id ASC`;
+      ORDER BY p.sort_order ASC NULLS FIRST, p.id DESC`;
     const result = await db.query(query);
     const products = result.rows.map((p) => ({ ...p, nameBs: p.name_bs }));
     res.json(products);
@@ -429,6 +446,25 @@ app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) =
     await db.query("ROLLBACK");
     console.error(err.message);
     res.status(500).send("Server Error");
+  }
+});
+
+app.patch("/api/products/reorder", authenticateToken, requireAdmin, async (req, res) => {
+  const { orderedIds } = req.body;
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ success: false, error: "orderedIds must be an array" });
+  }
+  try {
+    await db.query("BEGIN");
+    for (let i = 0; i < orderedIds.length; i++) {
+      await db.query("UPDATE products SET sort_order = $1 WHERE id = $2", [i + 1, orderedIds[i]]);
+    }
+    await db.query("COMMIT");
+    res.json({ success: true });
+  } catch (err) {
+    await db.query("ROLLBACK");
+    console.error(err.message);
+    res.status(500).json({ success: false, error: "Failed to reorder products" });
   }
 });
 
