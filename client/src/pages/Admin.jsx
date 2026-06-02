@@ -3,8 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders } from 'lucide-react';
+import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders, Loader2 } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
+import { getImageUrl } from '../utils/imageUrl';
 export default function Admin() {
     const { user, getToken } = useAuth();
     const wrapText = (text, every = 95) =>
@@ -22,8 +23,87 @@ export default function Admin() {
     const [pCategory, setPCategory] = useState('accessories');
     const [pImage, setPImage] = useState('');
     const [pDescription, setPDescription] = useState('');
-    const [pGallery, setPGallery] = useState('');
+    const [pGallery, setPGallery] = useState([]);
     const [editingProductId, setEditingProductId] = useState(null);
+
+    const [uploadingMain, setUploadingMain] = useState(false);
+    const [uploadingGallery, setUploadingGallery] = useState(false);
+
+    const handleMainImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File is too large! Maximum limit is 5MB.");
+            return;
+        }
+
+        setUploadingMain(true);
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const res = await fetch("http://localhost:5001/api/upload", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${getToken()}`,
+                },
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setPImage(data.imageUrl);
+            } else {
+                alert(data.error || "Failed to upload image.");
+            }
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("An error occurred during upload.");
+        } finally {
+            setUploadingMain(false);
+        }
+    };
+
+    const handleGalleryUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        for (const file of files) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`File "${file.name}" is too large! Maximum limit is 5MB.`);
+                return;
+            }
+        }
+
+        setUploadingGallery(true);
+        const formData = new FormData();
+        files.forEach((file) => {
+            formData.append("gallery", file);
+        });
+
+        try {
+            const res = await fetch("http://localhost:5001/api/upload-gallery", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${getToken()}`,
+                },
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setPGallery((prev) => [...prev, ...data.imageUrls]);
+            } else {
+                alert(data.error || "Failed to upload gallery images.");
+            }
+        } catch (err) {
+            console.error("Gallery upload failed", err);
+            alert("An error occurred during gallery upload.");
+        } finally {
+            setUploadingGallery(false);
+        }
+    };
     useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (!storedUser || storedUser.role !== 'admin') {
@@ -77,7 +157,7 @@ export default function Admin() {
     };
     const handleAddProduct = (e) => {
         e.preventDefault();
-        const galleryArray = pGallery ? pGallery.split(',').map(url => url.trim()).filter(url => url) : [];
+        const galleryArray = pGallery;
         if (editingProductId) {
             updateProduct(editingProductId, {
                 name: pName,
@@ -104,7 +184,7 @@ export default function Admin() {
         setPNameBs('');
         setPPrice('');
         setPDescription('');
-        setPGallery('');
+        setPGallery([]);
         setPImage('');
         setPCategory('accessories');
     };
@@ -269,7 +349,7 @@ export default function Admin() {
                             <div>
                                 <h2 className="text-xl font-bold mb-6">{t('admin', 'products')}</h2>
                                 <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8">
-                                    <h3 className="font-bold mb-4">{editingProductId ? 'Edit Product' : t('admin', 'addProduct')}</h3>
+                                    <h3 className="font-bold mb-4">{editingProductId ? t('admin', 'editProduct') : t('admin', 'addProduct')}</h3>
                                     <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productName')} (EN)</label>
@@ -281,7 +361,19 @@ export default function Admin() {
                                         </div>
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productPrice')}</label>
-                                            <input type="number" step="0.01" className="w-full p-2 border rounded" value={pPrice} onChange={(e) => setPPrice(e.target.value)} required />
+                                            <div className="relative rounded-lg shadow-sm">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span className="text-gray-500 sm:text-sm">€</span>
+                                                </div>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    className="w-full pl-8 p-2 border rounded outline-none focus:border-primary transition-colors" 
+                                                    value={pPrice} 
+                                                    onChange={(e) => setPPrice(e.target.value)} 
+                                                    required 
+                                                />
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="block mb-1 text-sm font-medium">{t('admin', 'productCategory')}</label>
@@ -292,39 +384,127 @@ export default function Admin() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'productImage')}</label>
-                                            <input className="w-full p-2 border rounded" value={pImage} onChange={e => setPImage(e.target.value)} required />
+                                            <label className="block mb-2 text-sm font-bold text-gray-700">{t('admin', 'productImage')}</label>
+                                            <div className="mt-1 flex flex-col items-start">
+                                                {pImage ? (
+                                                    <div className="relative group w-full max-w-[200px] h-[150px] rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                                                        <img
+                                                            src={getImageUrl(pImage)}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPImage("")}
+                                                                className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all duration-200 scale-90 group-hover:scale-100"
+                                                                title="Remove Image"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label className="w-full max-w-[250px] h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-yellow-50/20 transition-all group">
+                                                        {uploadingMain ? (
+                                                            <div className="flex flex-col items-center justify-center">
+                                                                <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                                                                <span className="text-xs text-gray-500 font-medium">{t('admin', 'uploadingImage')}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex flex-col items-center justify-center p-4 text-center">
+                                                                <Plus className="w-8 h-8 text-gray-400 group-hover:text-primary transition-colors mb-2" />
+                                                                <span className="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">{t('admin', 'chooseMainImage')}</span>
+                                                                <span className="text-xs text-gray-400 mt-1">{t('admin', 'maxSizeNotice')}</span>
+                                                            </div>
+                                                        )}
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            disabled={uploadingMain}
+                                                            onChange={handleMainImageUpload}
+                                                            required
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block mb-1 text-sm font-medium">Additional Images (Gallery)</label>
-                                            <input
-                                                className="w-full p-2 border rounded"
-                                                placeholder="Paste image links separated by comma..."
-                                                value={pGallery}
-                                                onChange={e => setPGallery(e.target.value)}
-                                            />
-                                            <p className="text-xs text-gray-400 mt-1"></p>
+                                            <label className="block mb-2 text-sm font-bold text-gray-700">{t('admin', 'productGallery')}</label>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                                {pGallery.map((img, idx) => (
+                                                    <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                                                        <img
+                                                            src={getImageUrl(img)}
+                                                            alt={`Gallery preview ${idx}`}
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setPGallery(pGallery.filter((_, i) => i !== idx));
+                                                                }}
+                                                                className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-all duration-200 scale-90 group-hover:scale-100"
+                                                                title="Delete Image"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {uploadingGallery && (
+                                                    <div className="aspect-square flex flex-col items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+                                                        <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
+                                                        <span className="text-[10px] text-gray-400">{t('admin', 'uploading')}</span>
+                                                    </div>
+                                                )}
+
+                                                {pGallery.length < 10 && !uploadingGallery && (
+                                                    <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-yellow-50/20 transition-all group">
+                                                        <Plus className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
+                                                        <span className="text-xs font-semibold text-gray-700 group-hover:text-primary transition-colors mt-1">{t('admin', 'addImage')}</span>
+                                                        <input
+                                                            type="file"
+                                                            multiple
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={handleGalleryUpload}
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block mb-1 text-sm font-medium">Description</label>
-                                            <textarea className="w-full p-2 border rounded h-24" value={pDescription} onChange={e => setPDescription(e.target.value)} placeholder="Product details..."></textarea>
+                                            <label className="block mb-1 text-sm font-medium">{t('admin', 'description')}</label>
+                                            <textarea className="w-full p-2 border rounded h-24" value={pDescription} onChange={e => setPDescription(e.target.value)} placeholder={t('admin', 'productDetailsPlaceholder')}></textarea>
                                         </div>
                                         <div className="md:col-span-2 flex gap-2">
-                                            <button type="submit" className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded hover:bg-secondary">
-                                                {editingProductId ? <Edit2 size={18} /> : <Plus size={18} />} {editingProductId ? 'Update' : t('admin', 'save')}
+                                            <button 
+                                                type="submit" 
+                                                disabled={uploadingMain || uploadingGallery}
+                                                className="flex items-center gap-2 bg-primary text-black font-bold px-5 py-2 rounded-xl hover:bg-yellow-400 disabled:opacity-50 transition-colors"
+                                            >
+                                                {editingProductId ? <Edit2 size={18} /> : <Plus size={18} />} {editingProductId ? t('admin', 'update') : t('admin', 'save')}
                                             </button>
                                             {editingProductId && (
-                                                <button type="button" onClick={() => {
-                                                    setEditingProductId(null);
-                                                    setPName('');
-                                                    setPNameBs('');
-                                                    setPPrice('');
-                                                    setPDescription('');
-                                                    setPGallery('');
-                                                    setPImage('');
-                                                    setPCategory('accessories');
-                                                }} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                                                    Cancel
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        setEditingProductId(null);
+                                                        setPName('');
+                                                        setPNameBs('');
+                                                        setPPrice('');
+                                                        setPDescription('');
+                                                        setPGallery([]);
+                                                        setPImage('');
+                                                        setPCategory('accessories');
+                                                    }} 
+                                                    className="bg-gray-200 text-gray-700 font-semibold px-5 py-2 rounded-xl hover:bg-gray-300 transition-colors"
+                                                >
+                                                    {t('admin', 'cancel')}
                                                 </button>
                                             )}
                                         </div>
@@ -333,7 +513,7 @@ export default function Admin() {
                                 <div className="space-y-3">
                                     {products.map(p => (
                                         <div key={p.id} className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                                            <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                                            <img src={getImageUrl(p.image)} alt={p.name} className="w-12 h-12 object-cover rounded" />
                                             <div className="flex-1">
                                                 <div className="font-bold">{lang === "bs" ? (p.nameBs || p.name) : p.name}</div>
                                                 <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} - {p.category}</div>
@@ -347,7 +527,7 @@ export default function Admin() {
                                                     setPCategory(p.category);
                                                     setPImage(p.image);
                                                     setPDescription(p.description || '');
-                                                    setPGallery((p.gallery || []).join(', '));
+                                                    setPGallery(p.gallery || []);
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }} className="text-blue-500 hover:bg-blue-50 p-2 rounded">
                                                     <Edit2 size={20} />

@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Trash2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { getImageUrl } from "../utils/imageUrl";
 
 export default function Cart() {
   const { cart, removeFromCart, placeOrder } = useShop();
@@ -84,7 +85,7 @@ export default function Cart() {
             >
               <div className="w-24 h-24 rounded overflow-hidden flex-shrink-0">
                 <img
-                  src={item.image}
+                  src={getImageUrl(item.image)}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />

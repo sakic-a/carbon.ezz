@@ -4,6 +4,7 @@ import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { Check, Plus, ArrowLeft, Truck, Shield, Clock } from "lucide-react";
+import { getImageUrl } from "../utils/imageUrl";
 export default function ProductDetails() {
   const { id } = useParams();
   const { addToCart } = useShop();
@@ -59,7 +60,7 @@ export default function ProductDetails() {
           <div>
             <div className="bg-gray-50 rounded-lg overflow-hidden h-[500px] flex items-center justify-center border border-gray-100 mb-4">
               <img
-                src={activeImage}
+                src={getImageUrl(activeImage)}
                 alt={name}
                 className="w-full h-full object-cover"
               />
@@ -73,7 +74,7 @@ export default function ProductDetails() {
                     className={`w-24 h-24 flex-shrink-0 rounded-md overflow-hidden border-2 transition-all ${activeImage === img ? "border-primary" : "border-transparent hover:border-gray-300"}`}
                   >
                     <img
-                      src={img}
+                      src={getImageUrl(img)}
                       alt={`View ${idx}`}
                       className="w-full h-full object-cover"
                     />

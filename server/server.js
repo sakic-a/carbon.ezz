@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const jwt = require("jsonwebtoken");
 
@@ -14,6 +16,14 @@ const PORT = process.env.PORT || 5001;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+// Serve uploads statically
+app.use("/uploads", express.static(uploadsDir));
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -48,6 +58,10 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Mount image upload routes
+const uploadRoutes = require("./routes/uploadRoutes")(authenticateToken, requireAdmin);
+app.use("/api", uploadRoutes);
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
