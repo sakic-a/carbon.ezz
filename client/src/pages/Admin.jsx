@@ -3,9 +3,58 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders, Loader2 } from 'lucide-react';
+import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders, Loader2, GripVertical } from 'lucide-react';
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, DragOverlay
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates,
+  verticalListSortingStrategy, useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIES } from '../data/categories';
 import { getImageUrl } from '../utils/imageUrl';
+function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? 'transform 220ms ease',
+    opacity: isDragging ? 0 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50"
+    >
+      {reorderMode && (
+        <button
+          className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing p-1 touch-none shrink-0 transition-colors"
+          title="Drag to reorder"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={20} />
+        </button>
+      )}
+      <img src={getImageUrl(p.image)} alt={p.name} className="w-12 h-12 object-cover rounded shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="font-bold truncate">{lang === 'bs' ? (p.nameBs || p.name) : p.name}</div>
+        <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} · {p.category}</div>
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <button onClick={() => onEdit(p)} className="text-blue-500 hover:bg-blue-50 p-2 rounded transition-colors">
+          <Edit2 size={20} />
+        </button>
+        <button onClick={() => onDelete(p.id)} className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors">
+          <Trash2 size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
     const { user, getToken } = useAuth();
     const wrapText = (text, every = 95) =>
@@ -25,32 +74,35 @@ export default function Admin() {
     const [pDescription, setPDescription] = useState('');
     const [pGallery, setPGallery] = useState([]);
     const [editingProductId, setEditingProductId] = useState(null);
+    const [reorderMode, setReorderMode] = useState(false);
+    const [orderedProducts, setOrderedProducts] = useState([]);
+    const [activeId, setActiveId] = useState(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
 
     const [uploadingMain, setUploadingMain] = useState(false);
     const [uploadingGallery, setUploadingGallery] = useState(false);
+    const [dragOverMain, setDragOverMain] = useState(false);
+    const [dragOverGallery, setDragOverGallery] = useState(false);
 
-    const handleMainImageUpload = async (e) => {
-        const file = e.target.files[0];
+    const handleMainImageUpload = async (file) => {
         if (!file) return;
-
         if (file.size > 5 * 1024 * 1024) {
             alert("File is too large! Maximum limit is 5MB.");
             return;
         }
-
         setUploadingMain(true);
         const formData = new FormData();
         formData.append("image", file);
-
         try {
             const res = await fetch("http://localhost:5001/api/upload", {
                 method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${getToken()}`,
-                },
+                headers: { "Authorization": `Bearer ${getToken()}` },
                 body: formData,
             });
-
             const data = await res.json();
             if (data.success) {
                 setPImage(data.imageUrl);
@@ -65,32 +117,23 @@ export default function Admin() {
         }
     };
 
-    const handleGalleryUpload = async (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
+    const handleGalleryUpload = async (files) => {
+        if (!files || files.length === 0) return;
         for (const file of files) {
             if (file.size > 5 * 1024 * 1024) {
                 alert(`File "${file.name}" is too large! Maximum limit is 5MB.`);
                 return;
             }
         }
-
         setUploadingGallery(true);
         const formData = new FormData();
-        files.forEach((file) => {
-            formData.append("gallery", file);
-        });
-
+        files.forEach((file) => formData.append("gallery", file));
         try {
             const res = await fetch("http://localhost:5001/api/upload-gallery", {
                 method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${getToken()}`,
-                },
+                headers: { "Authorization": `Bearer ${getToken()}` },
                 body: formData,
             });
-
             const data = await res.json();
             if (data.success) {
                 setPGallery((prev) => [...prev, ...data.imageUrls]);
@@ -155,6 +198,52 @@ export default function Admin() {
             console.error("Failed to update status", err);
         }
     };
+    useEffect(() => {
+        setOrderedProducts(products);
+    }, [products]);
+
+    const handleStartEdit = (p) => {
+        setEditingProductId(p.id);
+        setPName(p.name);
+        setPNameBs(p.nameBs || '');
+        setPPrice(p.price);
+        setPCategory(p.category);
+        setPImage(p.image);
+        setPDescription(p.description || '');
+        setPGallery(p.gallery || []);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDragStart = ({ active }) => setActiveId(active.id);
+
+    const handleDragEnd = ({ active, over }) => {
+        setActiveId(null);
+        if (!over || active.id === over.id) return;
+        setOrderedProducts(prev => {
+            const oldIndex = prev.findIndex(p => p.id === active.id);
+            const newIndex = prev.findIndex(p => p.id === over.id);
+            return arrayMove(prev, oldIndex, newIndex);
+        });
+    };
+
+    const handleSaveReorder = async () => {
+        try {
+            const res = await fetch('http://localhost:5001/api/products/reorder', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`,
+                },
+                body: JSON.stringify({ orderedIds: orderedProducts.map(p => p.id) }),
+            });
+            if (!res.ok) throw new Error(`${res.status}`);
+            setReorderMode(false);
+        } catch (err) {
+            console.error('Failed to save order', err);
+            alert('Failed to save order. Please try again.');
+        }
+    };
+
     const handleAddProduct = (e) => {
         e.preventDefault();
         const galleryArray = pGallery;
@@ -405,7 +494,12 @@ export default function Admin() {
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <label className="w-full max-w-[250px] h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-yellow-50/20 transition-all group">
+                                                    <label
+                                                        className={`w-full max-w-[250px] h-[140px] flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all group ${dragOverMain ? 'border-primary bg-yellow-50/40 scale-[1.02]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
+                                                        onDragOver={(e) => { e.preventDefault(); setDragOverMain(true); }}
+                                                        onDragLeave={() => setDragOverMain(false)}
+                                                        onDrop={(e) => { e.preventDefault(); setDragOverMain(false); handleMainImageUpload(e.dataTransfer.files[0]); }}
+                                                    >
                                                         {uploadingMain ? (
                                                             <div className="flex flex-col items-center justify-center">
                                                                 <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
@@ -413,8 +507,8 @@ export default function Admin() {
                                                             </div>
                                                         ) : (
                                                             <div className="flex flex-col items-center justify-center p-4 text-center">
-                                                                <Plus className="w-8 h-8 text-gray-400 group-hover:text-primary transition-colors mb-2" />
-                                                                <span className="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">{t('admin', 'chooseMainImage')}</span>
+                                                                <Plus className={`w-8 h-8 transition-colors mb-2 ${dragOverMain ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`} />
+                                                                <span className={`text-sm font-semibold transition-colors ${dragOverMain ? 'text-primary' : 'text-gray-700 group-hover:text-primary'}`}>{dragOverMain ? 'Drop to upload' : t('admin', 'chooseMainImage')}</span>
                                                                 <span className="text-xs text-gray-400 mt-1">{t('admin', 'maxSizeNotice')}</span>
                                                             </div>
                                                         )}
@@ -423,7 +517,7 @@ export default function Admin() {
                                                             accept="image/*"
                                                             className="hidden"
                                                             disabled={uploadingMain}
-                                                            onChange={handleMainImageUpload}
+                                                            onChange={(e) => handleMainImageUpload(e.target.files[0])}
                                                             required
                                                         />
                                                     </label>
@@ -463,15 +557,20 @@ export default function Admin() {
                                                 )}
 
                                                 {pGallery.length < 10 && !uploadingGallery && (
-                                                    <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-yellow-50/20 transition-all group">
-                                                        <Plus className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
-                                                        <span className="text-xs font-semibold text-gray-700 group-hover:text-primary transition-colors mt-1">{t('admin', 'addImage')}</span>
+                                                    <label
+                                                        className={`aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-all group ${dragOverGallery ? 'border-primary bg-yellow-50/40 scale-[1.04]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
+                                                        onDragOver={(e) => { e.preventDefault(); setDragOverGallery(true); }}
+                                                        onDragLeave={() => setDragOverGallery(false)}
+                                                        onDrop={(e) => { e.preventDefault(); setDragOverGallery(false); handleGalleryUpload(Array.from(e.dataTransfer.files)); }}
+                                                    >
+                                                        <Plus className={`w-6 h-6 transition-colors ${dragOverGallery ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`} />
+                                                        <span className={`text-xs font-semibold transition-colors mt-1 ${dragOverGallery ? 'text-primary' : 'text-gray-700 group-hover:text-primary'}`}>{dragOverGallery ? 'Drop here' : t('admin', 'addImage')}</span>
                                                         <input
                                                             type="file"
                                                             multiple
                                                             accept="image/*"
                                                             className="hidden"
-                                                            onChange={handleGalleryUpload}
+                                                            onChange={(e) => handleGalleryUpload(Array.from(e.target.files))}
                                                         />
                                                     </label>
                                                 )}
@@ -510,35 +609,54 @@ export default function Admin() {
                                         </div>
                                     </form>
                                 </div>
-                                <div className="space-y-3">
-                                    {products.map(p => (
-                                        <div key={p.id} className="flex items-center gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                                            <img src={getImageUrl(p.image)} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                                            <div className="flex-1">
-                                                <div className="font-bold">{lang === "bs" ? (p.nameBs || p.name) : p.name}</div>
-                                                <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} - {p.category}</div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => {
-                                                    setEditingProductId(p.id);
-                                                    setPName(p.name);
-                                                    setPNameBs(p.nameBs || '');
-                                                    setPPrice(p.price);
-                                                    setPCategory(p.category);
-                                                    setPImage(p.image);
-                                                    setPDescription(p.description || '');
-                                                    setPGallery(p.gallery || []);
-                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                }} className="text-blue-500 hover:bg-blue-50 p-2 rounded">
-                                                    <Edit2 size={20} />
-                                                </button>
-                                                <button onClick={() => deleteProduct(p.id)} className="text-red-500 hover:bg-red-50 p-2 rounded">
-                                                    <Trash2 size={20} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="flex justify-end mb-4">
+                                    <button
+                                        onClick={() => reorderMode ? handleSaveReorder() : setReorderMode(true)}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${reorderMode ? 'bg-primary text-black shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        <GripVertical size={15} />
+                                        {reorderMode ? t('admin', 'reorderDone') : t('admin', 'reorder')}
+                                    </button>
                                 </div>
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragStart={handleDragStart}
+                                    onDragEnd={handleDragEnd}
+                                >
+                                    <SortableContext
+                                        items={orderedProducts.map(p => p.id)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        <div className="divide-y divide-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                                            {orderedProducts.map(p => (
+                                                <SortableProductRow
+                                                    key={p.id}
+                                                    p={p}
+                                                    lang={lang}
+                                                    reorderMode={reorderMode}
+                                                    onEdit={handleStartEdit}
+                                                    onDelete={deleteProduct}
+                                                />
+                                            ))}
+                                        </div>
+                                    </SortableContext>
+                                    <DragOverlay dropAnimation={{ duration: 180, easing: 'ease' }}>
+                                        {activeId ? (() => {
+                                            const p = orderedProducts.find(x => x.id === activeId);
+                                            return p ? (
+                                                <div className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-2xl border-2 border-primary">
+                                                    <GripVertical size={20} className="text-primary shrink-0" />
+                                                    <img src={getImageUrl(p.image)} alt={p.name} className="w-12 h-12 object-cover rounded shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-bold truncate">{lang === 'bs' ? (p.nameBs || p.name) : p.name}</div>
+                                                        <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} · {p.category}</div>
+                                                    </div>
+                                                </div>
+                                            ) : null;
+                                        })() : null}
+                                    </DragOverlay>
+                                </DndContext>
                             </div>
                         )}
                         {activeTab === 'messages' && (

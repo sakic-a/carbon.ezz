@@ -86,6 +86,8 @@ export const translations = {
       update: "Update Product",
       delete: "Delete",
       save: "Save Product",
+      reorder: "Reorder",
+      reorderDone: "Save",
     },
     faq: {
       title: "Frequently Asked Questions",
@@ -226,6 +228,8 @@ export const translations = {
       update: "Ažuriraj proizvod",
       delete: "Obriši",
       save: "Sačuvaj Proizvod",
+      reorder: "Preuredi",
+      reorderDone: "Spasi",
     },
     faq: {
       title: "Česta Pitanja",
