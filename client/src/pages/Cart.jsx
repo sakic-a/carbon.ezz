@@ -1,9 +1,10 @@
 import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+
 export default function Cart() {
   const { cart, removeFromCart, placeOrder } = useShop();
   const { t } = useLanguage();
@@ -16,6 +17,9 @@ export default function Cart() {
   const [zip, setZip] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("Bosnia & Herzegovina");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState("");
+
   const handleCheckout = () => {
     if (!user) {
       navigate("/login?redirect=/cart");
@@ -23,17 +27,32 @@ export default function Cart() {
     }
     setShowShipping(true);
   };
-  const submitOrder = (e) => {
+
+  const submitOrder = async (e) => {
     e.preventDefault();
-    const shippingDetails = { name, address, city, zip, country, phone };
-    placeOrder(user, shippingDetails);
-    alert(t("cart", "success"));
-    navigate("/");
+    setIsSubmitting(true);
+    setOrderError("");
+    try {
+      const shippingDetails = { name, address, city, zip, country, phone };
+      const success = await placeOrder(user, shippingDetails);
+      if (success) {
+        setShowShipping(false);
+        navigate("/dashboard?tab=orders&success=1");
+      } else {
+        setOrderError("Order failed. Please try again.");
+      }
+    } catch (err) {
+      setOrderError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
   const cartTotal = cart.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
+
   if (cart.length === 0) {
     return (
       <div className="py-20 text-center container mx-auto px-4 min-h-screen flex flex-col items-center justify-center">
@@ -50,6 +69,7 @@ export default function Cart() {
       </div>
     );
   }
+
   return (
     <div className="py-16 bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -100,12 +120,18 @@ export default function Cart() {
           </button>
         </div>
       </div>
+
       {showShipping && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8 animate-fade-in">
             <h2 className="text-2xl font-bold mb-6 text-black">
               {t("cart", "shippingTitle")}
             </h2>
+            {orderError && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm flex items-center gap-2">
+                <AlertCircle size={16} /> {orderError}
+              </div>
+            )}
             <form onSubmit={submitOrder} className="space-y-4">
               <div>
                 <label className="block mb-1 font-medium text-sm">
@@ -181,15 +207,24 @@ export default function Cart() {
                 <button
                   type="button"
                   onClick={() => setShowShipping(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded font-medium hover:bg-gray-300"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded font-medium hover:bg-gray-300 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-primary text-black py-2 rounded font-medium hover:bg-yellow-400"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-primary text-black py-2 rounded font-medium hover:bg-yellow-400 disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {t("cart", "placeOrder")}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Placing...
+                    </>
+                  ) : (
+                    t("cart", "placeOrder")
+                  )}
                 </button>
               </div>
             </form>

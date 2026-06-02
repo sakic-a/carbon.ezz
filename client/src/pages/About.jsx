@@ -13,19 +13,23 @@ export default function About() {
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    sendMessage({
+    const ok = await sendMessage({
       name: cName,
       email: cEmail,
       phone: cPhone,
       message: cMessage,
     });
-    alert(t("faq", "success"));
-    setCName("");
-    setCEmail("");
-    setCPhone("");
-    setCMessage("");
+    if (ok) {
+      alert(t("faq", "success"));
+      setCName("");
+      setCEmail("");
+      setCPhone("");
+      setCMessage("");
+    } else {
+      alert("Something went wrong. Please try again.");
+    }
   };
   const faqs = [
     { q: t("faq", "q1"), a: t("faq", "a1") },
@@ -82,7 +86,13 @@ export default function About() {
               Visoko, Bosnia and Herzegovina
             </p>
             <p>
-              <strong className="text-gray-700">Phone:</strong> +387 61 353 966
+              <strong className="text-gray-700">Phone:</strong>{" "}
+              <a
+                href="tel:+38761353966"
+                className="text-primary hover:underline font-medium transition-colors"
+              >
+                +387 61 353 966
+              </a>
             </p>
           </div>
           <form onSubmit={handleSendMessage} className="space-y-4">

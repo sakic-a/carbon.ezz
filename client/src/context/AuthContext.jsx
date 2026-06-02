@@ -5,7 +5,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      }
     }
   }, []);
   const login = async (email, password) => {
@@ -21,7 +26,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (err) {
       return { success: false, error: err.message };
     }
@@ -50,9 +55,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
   const getToken = () => localStorage.getItem("token");
+  const loginWithToken = (token, userData) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, getToken, isAdmin: user?.role === "admin" }}
+      value={{ user, login, register, logout, getToken, loginWithToken, isAdmin: user?.role === "admin" }}
     >
       {children}
     </AuthContext.Provider>

@@ -15,7 +15,10 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState("");
   useEffect(() => {
     fetch(`http://localhost:5001/api/products/${id}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Product not found");
+        return res.json();
+      })
       .then((data) => {
         setProduct(data);
         setActiveImage(data.image);
@@ -41,7 +44,7 @@ export default function ProductDetails() {
         Product not found
       </div>
     );
-  const name = lang === "bs" ? product.nameBs : product.name;
+  const name = lang === "bs" ? (product.nameBs || product.name) : product.name;
   const isAdmin = user?.role === "admin";
   const gallery = product.gallery
     ? [product.image, ...product.gallery]

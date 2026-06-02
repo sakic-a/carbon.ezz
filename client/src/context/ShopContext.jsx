@@ -40,12 +40,13 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch("http://localhost:5001/api/products", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json" ,
-           "Authorization": `Bearer ${getToken()}`, 
+           "Authorization": `Bearer ${getToken()}`,
         },
         body: JSON.stringify(product),
       });
+      if (!response.ok) throw new Error("Failed to add product");
       const newProduct = await response.json();
       setProductsList((prev) => [...prev, newProduct]);
     } catch (err) {
@@ -56,12 +57,13 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch(`http://localhost:5001/api/products/${id}`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json" ,
-          "Authorization": `Bearer ${getToken()}`, 
+          "Authorization": `Bearer ${getToken()}`,
         },
         body: JSON.stringify(productData),
       });
+      if (!response.ok) throw new Error("Failed to update product");
       const updatedProduct = await response.json();
       setProductsList((prev) => prev.map((p) => p.id === id ? updatedProduct : p));
     } catch (err) {
@@ -85,7 +87,7 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch("http://localhost:5001/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
         body: JSON.stringify({
           userEmail: user.email,
           shipping: shippingDetails,

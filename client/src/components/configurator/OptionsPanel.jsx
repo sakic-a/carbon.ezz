@@ -1,19 +1,51 @@
+import { useState, useEffect } from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { ringColours } from '../../data/configuratorConstants';
+
+function StitchingPreviewCard() {
+  const { state } = useConfigurator();
+  const { t } = useLanguage();
+  const { threadColour } = state;
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => { setImageError(false); }, [threadColour]);
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-black mb-3">
+        {t('configurator', 'stitching')}
+      </h3>
+      <div className="relative border border-gray-100 rounded-lg bg-gray-50 flex flex-col items-center justify-center p-4 min-h-[140px]">
+        {!imageError ? (
+          <img
+            src={`/wheels/thread/${threadColour}.png`}
+            alt={`${threadColour} Stitching`}
+            className="w-full h-auto object-contain rounded shadow-sm"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-24 bg-gray-50/30 rounded" />
+        )}
+      </div>
+    </div>
+  );
+}
 
 const topOptions    = ['smooth', 'alcantara', 'carbon', 'perforated'];
 const sideOptions   = ['smooth', 'alcantara', 'perforated'];
 const bottomOptions = ['smooth', 'alcantara', 'carbon', 'perforated'];
 
-function MaterialSelector({ label, options, value, actionType }) {
+function MaterialSelector({ label, options, value, actionType, highlight, className = 'mb-6' }) {
   const { dispatch } = useConfigurator();
   const { t } = useLanguage();
 
   return (
-    <div className="mb-6">
-      <p className="text-sm font-semibold uppercase tracking-wide mb-2">{label}</p>
-      <div className="flex gap-2">
+    <div
+      className={`${className} transition-all duration-300`}
+    >
+      <p className={`text-sm font-semibold uppercase tracking-wide mb-2 transition-colors duration-300 ${highlight ? 'text-primary' : ''}`}>{label}</p>
+      <div className="flex flex-wrap gap-2">
         {options.map(option => (
           <button
             key={option}
@@ -32,16 +64,16 @@ function MaterialSelector({ label, options, value, actionType }) {
   );
 }
 
-export default function OptionsPanel({ onOpenInquiry }) {
+export default function OptionsPanel({ onOpenInquiry, activeZone }) {
   const { state, dispatch } = useConfigurator();
   const { t } = useLanguage();
 
   return (
     <div className="p-6">
       {/* Wheel shape */}
-      <div className="mb-6">
+      <div className="mb-6 pl-3 border-l-4 border-transparent">
         <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'wheelType')}</p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['factory', 'flat', 'full'].map(shape => (
             <button
               key={shape}
@@ -58,11 +90,15 @@ export default function OptionsPanel({ onOpenInquiry }) {
         </div>
       </div>
 
-      <MaterialSelector label={t('configurator', 'top')}    options={topOptions}    value={state.topMaterial}    actionType="SET_TOP" />
-      <MaterialSelector label={t('configurator', 'sides')}  options={sideOptions}   value={state.sideMaterial}   actionType="SET_SIDE" />
-      <MaterialSelector label={t('configurator', 'bottom')} options={bottomOptions} value={state.bottomMaterial} actionType="SET_BOTTOM" />
+      {/* Top + Bottom side by side */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <MaterialSelector label={t('configurator', 'top')}    options={topOptions}    value={state.topMaterial}    actionType="SET_TOP"    highlight={activeZone === 'top'}    className="" />
+        <MaterialSelector label={t('configurator', 'bottom')} options={bottomOptions} value={state.bottomMaterial} actionType="SET_BOTTOM" highlight={activeZone === 'bottom'} className="" />
+      </div>
 
-      {/* Ring toggle */}
+      <MaterialSelector label={t('configurator', 'sides')} options={sideOptions} value={state.sideMaterial} actionType="SET_SIDE" highlight={activeZone === 'sides'} />
+
+      {/* Ring toggle + colour */}
       <div className="mb-6">
         <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'ring')}</p>
         <button
@@ -93,6 +129,10 @@ export default function OptionsPanel({ onOpenInquiry }) {
           </div>
         </div>
       )}
+
+      <div className="lg:hidden">
+        <StitchingPreviewCard />
+      </div>
 
       <div className="mb-6">
         <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'stitching')}</p>

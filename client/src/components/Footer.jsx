@@ -41,7 +41,13 @@ export default function Footer() {
             Resada Kadica, Visoko, Bosnia and Herzegovina
           </div>
           <div className="mt-2">
-            <span className="font-bold">Phone:</span> +387 61 353 966
+            <span className="font-bold">Phone:</span>{" "}
+            <a
+              href="tel:+38761353966"
+              className="hover:text-primary transition-colors underline underline-offset-2"
+            >
+              +387 61 353 966
+            </a>
           </div>
         </div>
         <p>&copy; 2025 Carbon.ez. All rights reserved.</p>
