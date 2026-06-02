@@ -30,7 +30,7 @@ export default function Home() {
               to="/configurator"
               className="inline-flex items-center gap-2 border-2 border-primary text-primary px-8 py-3 rounded-full font-bold text-lg hover:bg-primary hover:text-black transition-colors w-full sm:w-auto justify-center"
             >
-              {lang === "bs" ? "Dizajnirajte svoj" : "Configure Yours"} <ArrowRight size={20} />
+              {t("home", "configureYours")} <ArrowRight size={20} />
             </Link>
           </div>
         </div>
@@ -76,18 +76,16 @@ export default function Home() {
       <section className="py-24 bg-black text-white relative overflow-hidden border-t border-b border-gray-800">
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-3xl md:text-4xl font-extrabold mb-4 tracking-tight">
-            {lang === "bs" ? "Dizajnirajte Svoj Savršeni Volan" : "Design Your Perfect Steering Wheel"}
+            {t("home", "designTitle")}
           </h2>
           <p className="text-lg text-gray-400 mb-8 max-w-xl mx-auto">
-            {lang === "bs" 
-              ? "Upotrijebite naš konfigurator u stvarnom vremenu za odabir oblika volana, premium materijala i boja šavova." 
-              : "Use our real-time customizer to choose your steering wheel shape, premium materials, and custom stitching."}
+            {t("home", "designSubtitle")}
           </p>
           <Link
             to="/configurator"
             className="inline-flex items-center gap-2 bg-primary text-black px-8 py-3 rounded-full font-bold text-lg hover:bg-yellow-400 transition-colors"
           >
-            {lang === "bs" ? "Otvori Konfigurator" : "Launch Configurator"} <ArrowRight size={20} />
+            {t("home", "launchConfigurator")} <ArrowRight size={20} />
           </Link>
         </div>
       </section>
@@ -107,7 +105,7 @@ export default function Home() {
               to="/shop"
               className="inline-block border-2 border-black text-black px-8 py-3 rounded font-bold hover:bg-primary hover:text-black transition-colors"
             >
-              View All Products
+              {t("shop", "viewAll")}
             </Link>
           </div>
         </div>

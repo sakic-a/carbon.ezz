@@ -16,7 +16,7 @@ export default function Gallery() {
           {t("nav", "gallery")}
         </h1>
         <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-          A glimpse into our premium collection and happy customers.
+          {t("gallery", "subtitle")}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {images.map((image, index) => (
@@ -25,7 +25,7 @@ export default function Gallery() {
               className="h-[300px] rounded-lg overflow-hidden shadow-sm bg-gray-100 relative group"
             >
               <div className="absolute inset-0 flex items-center justify-center text-gray-400 z-0">
-                Loading...
+                {t("gallery", "loading")}
               </div>
               <img
                 src={image.src}

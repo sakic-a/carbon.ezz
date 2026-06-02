@@ -38,7 +38,7 @@ export default function Footer() {
         <div className="opacity-80 text-sm mb-5">
           <div>
             <MapPin size={18} className="inline mr-1" />
-            Resada Kadica, Visoko, Bosnia and Herzegovina
+            Visoko, Bosnia and Herzegovina
           </div>
           <div className="mt-2">
             <span className="font-bold">Phone:</span>{" "}
@@ -50,7 +50,7 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <p>&copy; 2025 Carbon.ez. All rights reserved.</p>
+        <p>&copy; 2026 Carbon.ez. All rights reserved.</p>
       </div>
     </footer>
   );
