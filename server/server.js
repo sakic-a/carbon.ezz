@@ -273,7 +273,7 @@ app.get(
   "/api/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "http://localhost:5173/login",
+    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login`,
   }),
   (req, res) => {
     const token = jwt.sign(
@@ -283,7 +283,7 @@ app.get(
     );
     const user = { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role };
     res.redirect(
-      `http://localhost:5173/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
+      `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
     );
   }
 );
