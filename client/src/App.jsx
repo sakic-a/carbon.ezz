@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
+import { useEffect } from "react";
 import { LanguageProvider } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ShopProvider } from "./context/ShopContext";
@@ -16,9 +17,21 @@ import UserDashboard from "./pages/UserDashboard";
 import GoogleCallback from "./pages/GoogleCallback";
 import Configurator from "./pages/Configurator";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navType = useNavigationType();
+  useEffect(() => {
+    if (navType !== "POP") {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, navType]);
+  return null;
+}
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <LanguageProvider>
         <AuthProvider>
           <ShopProvider>

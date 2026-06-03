@@ -10,6 +10,7 @@ export const translations = {
       login: "Login",
       logout: "Logout",
       cart: "Cart",
+      myAccount: "My Account",
     },
     hero: {
       title: "Redefine Your Drive",
@@ -187,6 +188,7 @@ export const translations = {
       login: "Prijava",
       logout: "Odjava",
       cart: "Korpa",
+      myAccount: "Moj račun",
     },
     hero: {
       title: "Redefinišite Svoju Vožnju",

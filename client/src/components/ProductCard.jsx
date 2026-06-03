@@ -23,6 +23,7 @@ export default function ProductCard({ product }) {
       <Link
         to={`/product/${product.id}`}
         className="block h-[350px] overflow-hidden relative"
+        onClick={() => sessionStorage.setItem("shopScrollY", window.scrollY.toString())}
       >
         <img
           src={getImageUrl(product.image)}
@@ -31,7 +32,11 @@ export default function ProductCard({ product }) {
         />
       </Link>
       <div className="p-5">
-        <Link to={`/product/${product.id}`} className="block">
+        <Link
+          to={`/product/${product.id}`}
+          className="block"
+          onClick={() => sessionStorage.setItem("shopScrollY", window.scrollY.toString())}
+        >
           <h3 className="text-lg font-semibold mb-2 text-gray-800 hover:text-primary transition-colors">
             {name}
           </h3>

@@ -1,12 +1,32 @@
 import { useLanguage } from "../context/LanguageContext";
 import { useShop } from "../context/ShopContext";
-import { useState } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
+import { useNavigationType } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { CATEGORIES } from "../data/categories";
+
 export default function Shop() {
   const { t } = useLanguage();
   const { products } = useShop();
   const [filter, setFilter] = useState("all");
+  const navType = useNavigationType();
+
+  useEffect(() => {
+    if (navType === "PUSH") {
+      sessionStorage.removeItem("shopScrollY");
+    }
+  }, [navType]);
+
+  useLayoutEffect(() => {
+    if (products && products.length > 0) {
+      const savedScrollY = sessionStorage.getItem("shopScrollY");
+      if (savedScrollY) {
+        window.scrollTo(0, parseInt(savedScrollY, 10));
+        sessionStorage.removeItem("shopScrollY");
+      }
+    }
+  }, [products]);
+
   const filteredProducts =
     filter === "all" ? products : products.filter((p) => p.category === filter);
   return (

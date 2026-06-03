@@ -82,8 +82,7 @@ export default function About() {
           </p>
           <div className="text-center mb-8 text-gray-500 text-sm">
             <p className="mb-1">
-              <strong className="text-gray-700">{t("faq", "addressLabel")}:</strong> Resada Kadica,
-              Visoko, Bosnia and Herzegovina
+              <strong className="text-gray-700">{t("faq", "addressLabel")}:</strong> Visoko, Bosnia and Herzegovina
             </p>
             <p>
               <strong className="text-gray-700">{t("faq", "phoneLabel")}:</strong>{" "}
