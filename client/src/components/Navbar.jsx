@@ -152,7 +152,7 @@ export default function Navbar() {
 
           <div className="flex flex-col gap-3 mt-2">
             <button
-              onClick={() => { toggleLanguage(); setIsOpen(false); }}
+              onClick={toggleLanguage}
               className="flex items-center gap-2 py-2"
             >
               <Globe size={18} /> Language: {lang.toUpperCase()}
