@@ -57,8 +57,6 @@ function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete }) {
 
 export default function Admin() {
     const { user, getToken } = useAuth();
-    const wrapText = (text, every = 95) =>
-        text.replace(new RegExp(`(.{${every}})`, "g"), "$1\n");
     const { t, lang } = useLanguage();
     const { products, addProduct, updateProduct, deleteProduct } = useShop();
     const navigate = useNavigate();
@@ -676,11 +674,11 @@ export default function Admin() {
                                                     {msg.email}
                                                     {msg.phone && <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{msg.phone}</span>}
                                                 </div>
-                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4 whitespace-pre-wrap">{wrapText(msg.message)}</p>
+                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4 whitespace-pre-wrap break-words">{msg.message}</p>
                                                 {msg.reply ? (
                                                     <div className="bg-green-50 p-3 rounded border border-green-100 ml-8">
                                                         <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
-                                                        <p className="text-green-900 whitespace-pre-wrap">{wrapText(msg.reply)}</p>
+                                                        <p className="text-green-900 whitespace-pre-wrap break-words">{msg.reply}</p>
                                                     </div>
                                                 ) : (
                                                     <div className="flex gap-2 mt-2">

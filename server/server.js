@@ -256,24 +256,17 @@ app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
   }
 });
 
+
 app.get(
   "/api/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-  })
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
-
-app.get("/api/auth/facebook", (req, res) => {
-  res.status(501).json({
-    error: "Facebook OAuth not configured. Install passport-facebook and set FACEBOOK_APP_ID / FACEBOOK_APP_SECRET in .env"
-  });
-});
 
 app.get(
   "/api/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "http://localhost:5173/login",
+    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login`,
   }),
   (req, res) => {
     const token = jwt.sign(
@@ -283,7 +276,7 @@ app.get(
     );
     const user = { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role };
     res.redirect(
-      `http://localhost:5173/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
+      `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
     );
   }
 );
