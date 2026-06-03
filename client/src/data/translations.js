@@ -79,7 +79,6 @@ export const translations = {
       productPrice: "Price",
       productCategory: "Category",
       productImage: "Product Image",
-<<<<<<< HEAD
       productGallery: "Additional Gallery Images",
       chooseMainImage: "Choose Main Image",
       uploadingImage: "Uploading image...",
@@ -91,8 +90,6 @@ export const translations = {
       cancel: "Cancel",
       editProduct: "Edit Product",
       update: "Update Product",
-=======
->>>>>>> generalFixes
       delete: "Delete",
       save: "Save Product",
       reorder: "Reorder",
@@ -257,7 +254,6 @@ export const translations = {
       productName: "Naziv Proizvoda",
       productPrice: "Cijena",
       productCategory: "Kategorija",
-<<<<<<< HEAD
       productImage: "Slika proizvoda",
       productGallery: "Dodatne slike galerije",
       chooseMainImage: "Odaberi glavnu sliku",
@@ -270,9 +266,6 @@ export const translations = {
       cancel: "Otkaži",
       editProduct: "Uredi proizvod",
       update: "Ažuriraj proizvod",
-=======
-      productImage: "Slika Proizvoda",
->>>>>>> generalFixes
       delete: "Obriši",
       save: "Sačuvaj Proizvod",
       reorder: "Preuredi",
