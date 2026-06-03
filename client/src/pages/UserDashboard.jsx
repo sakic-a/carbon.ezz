@@ -288,7 +288,8 @@ export default function UserDashboard() {
       orderSearch === "" ||
       String(o.id).includes(orderSearch) ||
       (o.items || []).some((i) =>
-        i.name.toLowerCase().includes(orderSearch.toLowerCase())
+        i.name.toLowerCase().includes(orderSearch.toLowerCase()) ||
+        (i.name_bs || "").toLowerCase().includes(orderSearch.toLowerCase())
       );
     return matchesStatus && matchesSearch;
   });
