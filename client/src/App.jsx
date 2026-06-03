@@ -23,17 +23,6 @@ import UserDashboard from "./pages/UserDashboard";
 import GoogleCallback from "./pages/GoogleCallback";
 import Configurator from "./pages/Configurator";
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  const navType = useNavigationType();
-  useEffect(() => {
-    if (navType !== "POP") {
-      window.scrollTo(0, 0);
-    }
-  }, [pathname, navType]);
-  return null;
-}
-
 function App() {
   return (
     <Router>
@@ -42,7 +31,6 @@ function App() {
         <AuthProvider>
           <ShopProvider>
             <div className="min-h-screen flex flex-col font-sans text-slate-800">
-              <ScrollToTop />
               <Navbar />
               <main className="flex-grow">
                 <Routes>

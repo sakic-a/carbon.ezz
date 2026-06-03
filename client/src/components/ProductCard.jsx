@@ -47,11 +47,10 @@ export default function ProductCard({ product }) {
         {!isAdmin && (
           <button
             onClick={handleAdd}
-            className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded transition-colors ${
-              added
+            className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded transition-colors ${added
                 ? "bg-green-500 text-white hover:bg-green-600"
                 : "bg-primary text-black hover:bg-yellow-400"
-            }`}
+              }`}
           >
             {added ? <Check size={18} /> : <Plus size={18} />}
             <span>{added ? "Added" : t("shop", "addToCart")}</span>

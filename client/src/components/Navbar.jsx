@@ -27,7 +27,11 @@ export default function Navbar() {
           <Link to="/" className="hover:text-primary transition-colors">
             {t("nav", "home")}
           </Link>
-          <Link to="/shop" className="hover:text-primary transition-colors">
+          <Link
+            to="/shop"
+            className="hover:text-primary transition-colors"
+            onClick={() => sessionStorage.removeItem("shopScrollY")}
+          >
             {t("nav", "shop")}
           </Link>
           <Link to="/gallery" className="hover:text-primary transition-colors">
@@ -115,7 +119,10 @@ export default function Navbar() {
           <Link
             to="/shop"
             className="text-lg py-2 border-b border-gray-100"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              setIsOpen(false);
+              sessionStorage.removeItem("shopScrollY");
+            }}
           >
             {t("nav", "shop")}
           </Link>

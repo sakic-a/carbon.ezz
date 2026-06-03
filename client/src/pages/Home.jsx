@@ -123,7 +123,11 @@ export default function Home() {
             ))}
           </div>
           <div style={{ textAlign: "center", marginTop: 40 }}>
-            <Link to="/shop" className="hp-btn-outline">
+            <Link
+              to="/shop"
+              className="hp-btn-outline"
+              onClick={() => sessionStorage.removeItem("shopScrollY")}
+            >
               {t("shop", "viewAll")} <ArrowRight size={14} />
             </Link>
           </div>
