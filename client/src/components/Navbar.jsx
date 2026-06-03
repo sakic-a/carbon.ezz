@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Menu, X, Globe, LogOut, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { useShop } from "../context/ShopContext";
@@ -8,10 +8,98 @@ import { useShop } from "../context/ShopContext";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { lang, toggleLanguage, t } = useLanguage();
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
   const navigate = useNavigate();
   const { cart } = useShop();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const [updateCount, setUpdateCount] = useState(0);
+
+  useEffect(() => {
+    if (!user || user.role === "admin") {
+      setUpdateCount(0);
+      return;
+    }
+
+    const checkUpdates = async () => {
+      try {
+        const token = getToken();
+        if (!token) return;
+
+        const headers = { Authorization: `Bearer ${token}` };
+        const emailEnc = encodeURIComponent(user.email);
+
+        const [ordersRes, messagesRes, configRes] = await Promise.all([
+          fetch(`/api/orders/user/${emailEnc}`, { headers }).then((r) => r.ok ? r.json() : []),
+          fetch(`/api/messages/user/${emailEnc}`, { headers }).then((r) => r.ok ? r.json() : []),
+          fetch(`/api/configurator-inquiries/user/${emailEnc}`, { headers }).then((r) => r.ok ? r.json() : []),
+        ]);
+
+        let totalCount = 0;
+
+        // 1. Check orders
+        const ordersKey = `read_orders_status_${user.email}`;
+        let storedStatuses = {};
+        try {
+          storedStatuses = JSON.parse(localStorage.getItem(ordersKey)) || {};
+        } catch (e) {}
+        const isFirstOrdersLoad = Object.keys(storedStatuses).length === 0;
+        if (!isFirstOrdersLoad) {
+          ordersRes.forEach((o) => {
+            const prevStatus = storedStatuses[o.id];
+            if (!prevStatus || prevStatus !== o.status) {
+              totalCount++;
+            }
+          });
+        }
+
+        // 2. Check messages
+        const msgKey = `seen_messages_replies_${user.email}`;
+        let storedMsgReplies = {};
+        try {
+          storedMsgReplies = JSON.parse(localStorage.getItem(msgKey)) || {};
+        } catch (e) {}
+        messagesRes.forEach((m) => {
+          if (m.reply) {
+            const prevReply = storedMsgReplies[m.id];
+            if (prevReply !== m.reply) {
+              totalCount++;
+            }
+          }
+        });
+
+        // 3. Check configurator inquiries
+        const configKey = `seen_config_replies_${user.email}`;
+        let storedConfigReplies = {};
+        try {
+          storedConfigReplies = JSON.parse(localStorage.getItem(configKey)) || {};
+        } catch (e) {}
+        configRes.forEach((inq) => {
+          if (inq.reply) {
+            const prevReply = storedConfigReplies[inq.id];
+            if (prevReply !== inq.reply) {
+              totalCount++;
+            }
+          }
+        });
+
+        setUpdateCount(totalCount);
+      } catch (err) {
+        console.error("Failed to check navbar updates:", err);
+      }
+    };
+
+    checkUpdates();
+    // Re-check every 30 seconds or on window focus
+    const interval = setInterval(checkUpdates, 30000);
+    window.addEventListener("focus", checkUpdates);
+    window.addEventListener("dashboard-updates-read", checkUpdates);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", checkUpdates);
+      window.removeEventListener("dashboard-updates-read", checkUpdates);
+    };
+  }, [user]);
 
   return (
     <nav className="sticky top-0 z-50 h-[70px] flex items-center bg-white shadow-sm">
@@ -85,6 +173,11 @@ export default function Navbar() {
             >
               <User size={20} />
               <span>{user ? user.name : t("nav", "myAccount")}</span>
+              {updateCount > 0 && (
+                <span className="ml-1 bg-black text-primary text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {updateCount}
+                </span>
+              )}
             </Link>
           )}
 
@@ -181,6 +274,11 @@ export default function Navbar() {
               >
                 <User size={18} />
                 {user ? `My Account (${user.name})` : t("nav", "myAccount")}
+                {updateCount > 0 && (
+                  <span className="ml-1.5 bg-black text-primary text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {updateCount}
+                  </span>
+                )}
               </Link>
             )}
             {user && (

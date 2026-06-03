@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER")
-  .catch(err => console.error("Migration error:", err.message));
+  ?.catch?.(err => console.error("Migration error:", err.message));
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -497,7 +497,7 @@ app.post("/api/contact", async (req, res) => {
   try {
     await db.query(
       "INSERT INTO messages (name, email, message, phone) VALUES ($1, $2, $3, $4)",
-      [name, email, message, phone]
+      [name, email.toLowerCase(), message, phone]
     );
     res.json({ success: true });
   } catch (err) {
@@ -519,11 +519,11 @@ app.get("/api/admin/messages", authenticateToken, requireAdmin, async (req, res)
 // GET messages for a specific user (by email) – used by UserDashboard
 app.get("/api/messages/user/:email", authenticateToken, async (req, res) => {
   const { email } = req.params;
-  if (req.user.email !== email && req.user.role !== "admin")
+  if (req.user.email.toLowerCase() !== email.toLowerCase() && req.user.role !== "admin")
     return res.status(403).json({ success: false, error: "Forbidden" });
   try {
     const result = await db.query(
-      "SELECT * FROM messages WHERE email = $1 ORDER BY created_at DESC",
+      "SELECT * FROM messages WHERE LOWER(email) = LOWER($1) ORDER BY created_at DESC",
       [email]
     );
     res.json(result.rows);
@@ -618,6 +618,23 @@ app.get("/api/admin/configurator-inquiries", authenticateToken, requireAdmin, as
     res.json(result.rows);
   } catch (err) {
     console.error("Failed to fetch configurator inquiries:", err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.get("/api/configurator-inquiries/user/:email", authenticateToken, async (req, res) => {
+  const { email } = req.params;
+  if (req.user.email !== email && req.user.role !== "admin") {
+    return res.status(403).json({ success: false, error: "Forbidden" });
+  }
+  try {
+    const result = await db.query(
+      "SELECT * FROM configurator_inquiries WHERE email = $1 ORDER BY created_at DESC",
+      [email]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Failed to fetch user configurator inquiries:", err.message);
     res.status(500).send("Server Error");
   }
 });

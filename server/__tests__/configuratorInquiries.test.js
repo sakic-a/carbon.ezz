@@ -94,3 +94,79 @@ describe("POST /api/configurator-inquiries", () => {
     expect(res.status).toBe(500);
   });
 });
+
+const jwt = require("jsonwebtoken");
+
+describe("GET /api/configurator-inquiries/user/:email", () => {
+  const customerEmail = "user@example.com";
+  const customerToken = jwt.sign(
+    { email: customerEmail, role: "customer" },
+    process.env.JWT_SECRET
+  );
+  const adminToken = jwt.sign(
+    { email: "admin@example.com", role: "admin" },
+    process.env.JWT_SECRET
+  );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("returns 200 and the inquiries list for the matching authenticated user", async () => {
+    // Arrange
+    const fakeInquiries = [{ id: 1, email: customerEmail, selected_model: "audi" }];
+    db.query.mockResolvedValueOnce({ rows: fakeInquiries });
+
+    // Act
+    const res = await request(app)
+      .get(`/api/configurator-inquiries/user/${customerEmail}`)
+      .set("Authorization", `Bearer ${customerToken}`);
+
+    // Assert
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(fakeInquiries);
+    expect(db.query).toHaveBeenCalledTimes(1);
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining("WHERE email = $1"),
+      [customerEmail]
+    );
+  });
+
+  it("returns 200 and the inquiries list when requested by an admin", async () => {
+    // Arrange
+    const fakeInquiries = [{ id: 1, email: customerEmail, selected_model: "audi" }];
+    db.query.mockResolvedValueOnce({ rows: fakeInquiries });
+
+    // Act
+    const res = await request(app)
+      .get(`/api/configurator-inquiries/user/${customerEmail}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    // Assert
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(fakeInquiries);
+  });
+
+  it("returns 403 Forbidden when a user tries to access another user's inquiries", async () => {
+    // Act
+    const res = await request(app)
+      .get("/api/configurator-inquiries/user/other@example.com")
+      .set("Authorization", `Bearer ${customerToken}`);
+
+    // Assert
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 Unauthorized when no token is provided", async () => {
+    // Act
+    const res = await request(app)
+      .get(`/api/configurator-inquiries/user/${customerEmail}`);
+
+    // Assert
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+});
