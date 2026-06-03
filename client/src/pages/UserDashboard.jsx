@@ -196,12 +196,12 @@ export default function UserDashboard() {
   
   const dashTrans = {
     en: {
-      title: "My Account", orders: "My Orders", inquiries: "Inquiries",
+      title: "My Account", orders: "My Orders", inquiries: "Messages",
       cart: "Cart", password: "Change Password", noOrders: "You have no orders yet.",
       orderDate: "Date", orderTotal: "Total", orderStatus: "Status", orderItems: "Items",
       viewDetails: "View Details", hide: "Hide",
       statusPending: "Pending", statusApproved: "Approved", statusDeclined: "Declined",
-      sendMessage: "Send a Message", yourMessages: "Your Inquiries",
+      sendMessage: "Send a Message", yourMessages: "Your Messages",
       noMessages: "You haven't sent any messages yet.",
       adminReply: "Reply from Carbon.ez:", noReply: "Awaiting reply...",
       name: "Full Name", email: "Email", phone: "Phone Number", message: "Message",
@@ -221,12 +221,12 @@ export default function UserDashboard() {
       refresh: "Refresh Orders",
     },
     bs: {
-      title: "Moj Profil", orders: "Moje Narudžbe", inquiries: "Upiti",
+      title: "Moj Profil", orders: "Moje Narudžbe", inquiries: "Poruke",
       cart: "Korpa", password: "Promjena Šifre", noOrders: "Nemate narudžbi.",
       orderDate: "Datum", orderTotal: "Ukupno", orderStatus: "Status", orderItems: "Artikli",
       viewDetails: "Detalji", hide: "Sakrij",
       statusPending: "Na čekanju", statusApproved: "Odobreno", statusDeclined: "Odbijeno",
-      sendMessage: "Pošalji Poruku", yourMessages: "Vaši Upiti",
+      sendMessage: "Pošalji Poruku", yourMessages: "Vaše Poruke",
       noMessages: "Niste poslali nijedan upit.",
       adminReply: "Odgovor Carbon.ez:", noReply: "Čeka se odgovor...",
       name: "Ime i Prezime", email: "Email", phone: "Broj telefona", message: "Poruka",
@@ -590,9 +590,6 @@ export default function UserDashboard() {
                           {formatDate(msg.created_at)}
                         </span>
                       </div>
-                      {msg.phone && (
-                        <p className="text-xs text-gray-400 mb-2">📞 <a href={`tel:${msg.phone.replace(/\s+/g, "")}`} className="hover:text-primary underline underline-offset-2 transition-colors">{msg.phone}</a></p>
-                      )}
                       <div className={`mt-3 rounded-lg px-4 py-3 text-sm ${msg.reply ? "bg-primary/10 border border-primary/20" : "bg-gray-100 text-gray-400"}`}>
                         {msg.reply ? (
                           <>
