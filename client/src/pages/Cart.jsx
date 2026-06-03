@@ -17,7 +17,7 @@ export default function Cart() {
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
   const [phone, setPhone] = useState("");
-  const [country, setCountry] = useState("Bosnia & Herzegovina");
+  const [country, setCountry] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
 

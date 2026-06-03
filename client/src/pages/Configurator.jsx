@@ -15,7 +15,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
   const { state, dispatch } = useConfigurator();
   const { user } = useAuth();
   const { submitInquiry } = useShop();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -60,7 +60,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
       dispatch({ type: 'RESET' });
       onClose();
     } else {
-      alert(lang === "bs" ? "Došlo je do greške. Pokušajte ponovo." : "Something went wrong. Please try again.");
+      alert(t("configurator", "inquiryError"));
     }
   };
 
@@ -78,39 +78,34 @@ function PriceInquiryModal({ isOpen, onClose }) {
           {t("configurator", "inquiryTitle")}
         </h2>
         <p className="text-sm text-gray-500 text-center mb-6">
-          {lang === "bs" 
-            ? "Pošaljite nam svoje kontakt podatke i mi ćemo vam odgovoriti sa ponudom cijene za vaš prilagođeni dizajn volana."
-            : "Send us your contact information and our team will get back to you with a price quote for your custom steering wheel build."}
+          {t("configurator", "inquirySubtitle")}
         </p>
 
         <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100 text-sm">
           <h4 className="font-bold text-black mb-2 uppercase tracking-wider text-xs">
-            {lang === "bs" ? "Vaš Dizajn" : "Your Configuration"}
+            {t("configurator", "yourConfig")}
           </h4>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-600 capitalize">
-            <div><span className="font-semibold">{lang === "bs" ? "Model:" : "Base Model:"}</span> {state.selectedModel}</div>
-            <div><span className="font-semibold">{lang === "bs" ? "Oblik:" : "Shape:"}</span> {t("configurator", state.wheelShape)}</div>
-            <div><span className="font-semibold">{lang === "bs" ? "Gornji dio:" : "Top Grip:"}</span> {t("configurator", state.topMaterial)}</div>
-            <div><span className="font-semibold">{lang === "bs" ? "Strane:" : "Side Grips:"}</span> {t("configurator", state.sideMaterial)}</div>
-            <div><span className="font-semibold">{lang === "bs" ? "Donji dio:" : "Bottom Grip:"}</span> {t("configurator", state.bottomMaterial)}</div>
+            <div><span className="font-semibold">{t("configurator", "labelModel")}</span> {state.selectedModel}</div>
+            <div><span className="font-semibold">{t("configurator", "labelShape")}</span> {t("configurator", state.wheelShape)}</div>
+            <div><span className="font-semibold">{t("configurator", "labelTopGrip")}</span> {t("configurator", state.topMaterial)}</div>
+            <div><span className="font-semibold">{t("configurator", "labelSideGrips")}</span> {t("configurator", state.sideMaterial)}</div>
+            <div><span className="font-semibold">{t("configurator", "labelBottomGrip")}</span> {t("configurator", state.bottomMaterial)}</div>
             <div>
-              <span className="font-semibold">{lang === "bs" ? "Šavovi:" : "Stitching:"}</span>{" "}
+              <span className="font-semibold">{t("configurator", "labelStitching")}</span>{" "}
               <span className="inline-flex items-center gap-1.5 font-medium text-black">
-                <span 
+                <span
                   className="w-3 h-3 rounded-full border border-gray-300 inline-block"
-                  style={{ 
-                    backgroundColor: state.threadColour === 'white' ? '#ffffff' : 
-                                    state.threadColour === 'black' ? '#000000' : state.threadColour 
-                  }}
+                  style={{ backgroundColor: state.threadColour }}
                 />
                 {state.threadColour}
               </span>
             </div>
             {state.ringEnabled && (
               <div className="col-span-2">
-                <span className="font-semibold">{lang === "bs" ? "Prsten:" : "Ring:"}</span>{" "}
+                <span className="font-semibold">{t("configurator", "labelRing")}</span>{" "}
                 <span className="inline-flex items-center gap-1.5 font-medium text-black">
-                  <span 
+                  <span
                     className="w-3 h-3 rounded-full border border-gray-300 inline-block"
                     style={{ backgroundColor: state.ringColour }}
                   />
@@ -124,7 +119,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-1 font-semibold text-xs uppercase tracking-wider text-gray-600">
-              {lang === "bs" ? "Ime i prezime" : "Full Name"}
+              {t("configurator", "fullName")}
             </label>
             <input
               className="w-full p-3 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm"
@@ -159,7 +154,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
           </div>
           <div>
             <label className="block mb-1 font-semibold text-xs uppercase tracking-wider text-gray-600">
-              {lang === "bs" ? "Broj telefona" : "Phone Number"}
+              {t("configurator", "phone")}
             </label>
             <input
               type="tel"
@@ -179,7 +174,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
               rows="3"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={lang === "bs" ? "Unesite posebne zahtjeve ili pitanja..." : "Enter any special requests, custom finishes, or questions..."}
+              placeholder={t("configurator", "notesPlaceholder")}
             />
           </div>
 
@@ -198,7 +193,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
 
 function ConfiguratorContent() {
   const { state, dispatch } = useConfigurator();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { selectedModel } = state;
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -249,7 +244,7 @@ function ConfiguratorContent() {
                       />
                     ) : (
                       <span className="text-gray-400 font-bold uppercase tracking-wider text-xs">
-                        {lang === 'bs' ? 'Uskoro' : 'Coming Soon'}
+                        {t('configurator', 'comingSoon')}
                       </span>
                     )}
                   </div>

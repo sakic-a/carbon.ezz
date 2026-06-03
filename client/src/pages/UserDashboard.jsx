@@ -249,13 +249,11 @@ export default function UserDashboard() {
 
   const td = (key) => dashTrans[lang]?.[key] ?? dashTrans.en[key];
 
-  const wrapText = (text, every = 95) =>
-    text.replace(new RegExp(`(.{${every}})`, "g"), "$1\n");
 
   const formatDate = (value) => {
     if (!value) return "—";
     const d = new Date(value);
-    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-GB");
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString(lang === "bs" ? "bs-BA" : "en-GB");
   };
 
   const statusIcon = (status) => {
@@ -586,7 +584,7 @@ export default function UserDashboard() {
                   {messages.map((msg) => (
                     <div key={msg.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm text-black font-medium leading-snug whitespace-pre-wrap">{wrapText(msg.message)}</p>
+                        <p className="text-sm text-black font-medium leading-snug whitespace-pre-wrap break-words">{msg.message}</p>
                         <span className="text-xs text-gray-400 whitespace-nowrap">
                           {formatDate(msg.created_at)}
                         </span>
@@ -598,7 +596,7 @@ export default function UserDashboard() {
                         {msg.reply ? (
                           <>
                             <p className="font-semibold text-xs text-gray-600 mb-1">{td("adminReply")}</p>
-                            <p className="text-gray-800 whitespace-pre-wrap">{wrapText(msg.reply)}</p>
+                            <p className="text-gray-800 whitespace-pre-wrap break-words">{msg.reply}</p>
                           </>
                         ) : (
                           <p className="flex items-center gap-1.5 italic">
