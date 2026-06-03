@@ -14,7 +14,7 @@ export default function GoogleCallback() {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
         loginWithToken(token, user);
-        navigate("/dashboard", { replace: true });
+        navigate(user.role === "admin" ? "/admin" : "/shop", { replace: true });
       } catch {
         navigate("/login", { replace: true });
       }

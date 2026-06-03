@@ -71,7 +71,10 @@ export default function UserDashboard() {
     fetch(`${API}/orders/user/${encodeURIComponent(user.email)}`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         setOrders(Array.isArray(data) ? data : []);
         setOrdersLoading(false);
@@ -89,7 +92,10 @@ export default function UserDashboard() {
     fetch(`${API}/messages/user/${encodeURIComponent(user.email)}`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         setMessages(Array.isArray(data) ? data : []);
         setMessagesLoading(false);
@@ -166,12 +172,12 @@ export default function UserDashboard() {
     setPwError("");
     setPwSuccess("");
     if (newPw !== confirmPw) { setPwError(td("pwMismatch")); return; }
-    if (newPw.length < 6) { setPwError(td("pwTooShort")); return; }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(newPw)) { setPwError(td("pwTooShort")); return; }
     setPwLoading(true);
     try {
       const res = await fetch(`${API}/auth/change-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
         body: JSON.stringify({ email: user.email, currentPassword: currentPw, newPassword: newPw }),
       });
       const data = await res.json();
@@ -206,7 +212,7 @@ export default function UserDashboard() {
       confirmPw: "Confirm New Password", changePw: "Update Password",
       pwSuccess: "Password changed successfully!",
       pwError: "Failed to change password. Check your current password.",
-      pwMismatch: "New passwords do not match.", pwTooShort: "Password must be at least 6 characters.",
+      pwMismatch: "New passwords do not match.", pwTooShort: "Password must be 8+ characters with uppercase, lowercase, number and special character (!@#$%^&*).",
       logout: "Logout", hello: "Hello",
       orderSuccessBanner: "Your order was placed successfully!",
       filterAll: "All", filterPending: "Pending", filterApproved: "Approved", filterDeclined: "Declined",
@@ -231,7 +237,7 @@ export default function UserDashboard() {
       confirmPw: "Potvrdi Novu Šifru", changePw: "Promijeni Šifru",
       pwSuccess: "Šifra uspješno promijenjena!",
       pwError: "Greška. Provjerite trenutnu šifru.",
-      pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati najmanje 6 znakova.",
+      pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati 8+ znakova, veliko slovo, broj i poseban znak (!@#$%^&*).",
       logout: "Odjava", hello: "Zdravo",
       orderSuccessBanner: "Vaša narudžba je uspješno primljena!",
       filterAll: "Sve", filterPending: "Na čekanju", filterApproved: "Odobreno", filterDeclined: "Odbijeno",

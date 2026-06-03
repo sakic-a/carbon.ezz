@@ -77,6 +77,15 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 async function sendReplyEmail({ to, userName, originalMessage, replyText }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.log("[Email] Skipped – EMAIL_USER / EMAIL_PASS not configured");
@@ -90,13 +99,13 @@ async function sendReplyEmail({ to, userName, originalMessage, replyText }) {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#f5c518">Carbon.ez</h2>
-        <p>Hello ${userName || "there"},</p>
+        <p>Hello ${escapeHtml(userName) || "there"},</p>
         <p>You received a reply to your inquiry:</p>
         <blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555">
-          ${originalMessage}
+          ${escapeHtml(originalMessage)}
         </blockquote>
         <p style="background:#fffbe6;border:1px solid #f5c518;padding:12px;border-radius:6px">
-          <strong>Reply:</strong><br>${replyText}
+          <strong>Reply:</strong><br>${escapeHtml(replyText)}
         </p>
         <p style="color:#999;font-size:12px">Carbon.ez — premium carbon steering wheels</p>
       </div>`,
@@ -224,8 +233,13 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-app.post("/api/auth/change-password", async (req, res) => {
+app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
   const { email, currentPassword, newPassword } = req.body;
+  if (req.user.email !== email && req.user.role !== "admin")
+    return res.status(403).json({ success: false, error: "Forbidden" });
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+  if (!passwordRegex.test(newPassword))
+    return res.status(400).json({ success: false, error: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character (!@#$%^&*)." });
   try {
     const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
     if (result.rows.length === 0) return res.status(404).json({ success: false, error: "User not found" });
@@ -275,8 +289,10 @@ app.get(
 );
 
 // ── Orders ────────────────────────────────────────────────────────────────────
-app.post("/api/orders", async (req, res) => {
+app.post("/api/orders", authenticateToken, async (req, res) => {
   const { userEmail, shipping, items } = req.body;
+  if (req.user.email !== userEmail && req.user.role !== "admin")
+    return res.status(403).json({ success: false, error: "Forbidden" });
   try {
     // Resolve prices from DB — never trust client-submitted prices
     const resolvedItems = [];
@@ -330,6 +346,8 @@ app.post("/api/orders", async (req, res) => {
 // GET orders for a specific user (by email) – used by UserDashboard
 app.get("/api/orders/user/:email", authenticateToken, async (req, res) => {
   const { email } = req.params;
+  if (req.user.email !== email && req.user.role !== "admin")
+    return res.status(403).json({ success: false, error: "Forbidden" });
   try {
     const ordersRes = await db.query(
       "SELECT * FROM orders WHERE user_email = $1 ORDER BY created_at DESC",
@@ -472,6 +490,9 @@ app.patch("/api/products/reorder", authenticateToken, requireAdmin, async (req, 
 // ── Contact / Messages ────────────────────────────────────────────────────────
 app.post("/api/contact", async (req, res) => {
   const { name, email, message, phone } = req.body;
+  if (!name || !email || !message || !phone) {
+    return res.status(400).json({ success: false, error: "Name, email, phone, and message are required." });
+  }
   try {
     await db.query(
       "INSERT INTO messages (name, email, message, phone) VALUES ($1, $2, $3, $4)",
@@ -497,6 +518,8 @@ app.get("/api/admin/messages", authenticateToken, requireAdmin, async (req, res)
 // GET messages for a specific user (by email) – used by UserDashboard
 app.get("/api/messages/user/:email", authenticateToken, async (req, res) => {
   const { email } = req.params;
+  if (req.user.email !== email && req.user.role !== "admin")
+    return res.status(403).json({ success: false, error: "Forbidden" });
   try {
     const result = await db.query(
       "SELECT * FROM messages WHERE email = $1 ORDER BY created_at DESC",
@@ -535,6 +558,7 @@ app.patch("/api/messages/:id/reply", authenticateToken, requireAdmin, async (req
     res.status(500).send("Server Error");
   }
 });
+
 
 app.post("/api/configurator-inquiries", async (req, res) => {
   const {
@@ -631,7 +655,10 @@ app.patch("/api/admin/configurator-inquiries/:id/reply", authenticateToken, requ
     res.status(500).send("Server Error");
   }
 });
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = app;

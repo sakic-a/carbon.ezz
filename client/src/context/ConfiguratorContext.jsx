@@ -8,7 +8,7 @@ const initialState = {
   bottomMaterial: 'smooth',
   ringEnabled: false,
   ringColour: 'red',  
-  threadColour: 'black',
+  threadColour: 'red',
 };
 
 function configuratorReducer(state, action) {

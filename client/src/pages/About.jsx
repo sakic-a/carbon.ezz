@@ -13,19 +13,23 @@ export default function About() {
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    sendMessage({
+    const ok = await sendMessage({
       name: cName,
       email: cEmail,
       phone: cPhone,
       message: cMessage,
     });
-    alert(t("faq", "success"));
-    setCName("");
-    setCEmail("");
-    setCPhone("");
-    setCMessage("");
+    if (ok) {
+      alert(t("faq", "success"));
+      setCName("");
+      setCEmail("");
+      setCPhone("");
+      setCMessage("");
+    } else {
+      alert("Something went wrong. Please try again.");
+    }
   };
   const faqs = [
     { q: t("faq", "q1"), a: t("faq", "a1") },

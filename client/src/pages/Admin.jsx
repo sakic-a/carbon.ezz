@@ -148,9 +148,9 @@ export default function Admin() {
         }
     };
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem('user'));
-        if (!storedUser || storedUser.role !== 'admin') {
+        if (!user || user.role !== 'admin') {
             navigate('/login');
+            return;
         }
         fetch('http://localhost:5001/api/admin/orders', {
             headers: {
@@ -182,7 +182,7 @@ export default function Admin() {
                 if (Array.isArray(data)) setInquiries(data);
             })
             .catch(err => console.error("Failed to load configurator inquiries", err));
-    }, [navigate]);
+    }, [navigate, user]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
             await fetch(`http://localhost:5001/api/orders/${orderId}/status`, {

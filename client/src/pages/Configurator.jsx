@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ConfiguratorProvider } from '../context/ConfiguratorContext';
 import WheelPreview from '../components/configurator/WheelPreview';
 import OptionsPanel from '../components/configurator/OptionsPanel';
+import ZonePopover from '../components/configurator/ZonePopover';
 import { useConfigurator } from '../context/ConfiguratorContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,40 +10,6 @@ import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, X } from 'lucide-react';
 
-function StitchingPreviewCard() {
-  const { state } = useConfigurator();
-  const { t } = useLanguage();
-  const { threadColour } = state;
-  const [imageError, setImageError] = useState(false);
-
-  useEffect(() => {
-    setImageError(false);
-  }, [threadColour]);
-
-  const imageUrl = `/wheels/thread/${threadColour}.png`;
-
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mt-6">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-black mb-3">
-        {t('configurator', 'stitching')}
-      </h3>
-      <div className="relative border border-gray-100 rounded-lg bg-gray-50 flex flex-col items-center justify-center p-4 min-h-[140px] transition-all duration-300">
-        {!imageError ? (
-          <div className="w-full flex items-center justify-center">
-            <img 
-              src={imageUrl} 
-              alt={`${threadColour} Stitching`} 
-              className="w-full h-auto object-contain rounded shadow-sm"
-              onError={() => setImageError(true)}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-24 flex items-center justify-center bg-gray-50/30 rounded" />
-        )}
-      </div>
-    </div>
-  );
-}
 
 function PriceInquiryModal({ isOpen, onClose }) {
   const { state, dispatch } = useConfigurator();
@@ -141,7 +108,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
             </div>
             {state.ringEnabled && (
               <div className="col-span-2">
-                <span className="font-semibold">{lang === "bs" ? "Prsten:" : "Colour Ring:"}</span>{" "}
+                <span className="font-semibold">{lang === "bs" ? "Prsten:" : "Ring:"}</span>{" "}
                 <span className="inline-flex items-center gap-1.5 font-medium text-black">
                   <span 
                     className="w-3 h-3 rounded-full border border-gray-300 inline-block"
@@ -236,6 +203,11 @@ function ConfiguratorContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [activeZone, setActiveZone] = useState(null); // { zone, rect, anchor }
+
+  const handleZoneClick = (zone, rect, anchor) => {
+    setActiveZone({ zone, rect, anchor });
+  };
 
   const models = [
     { id: 'audi', name: 'Audi 4G S-Line / RS', image: '/wheels/audi/factory/audi_factory_base.png' },
@@ -298,31 +270,43 @@ function ConfiguratorContent() {
   }
 
   return (
-    <div className="bg-white min-h-screen py-16">
-      <div className="container mx-auto px-4 max-w-6xl">
-        <button 
-          onClick={() => dispatch({ type: 'SET_MODEL', value: null })}
-          className="mb-8 flex items-center gap-1.5 text-sm font-semibold text-secondary hover:text-primary transition-colors bg-transparent border-none cursor-pointer"
-        >
-          <ChevronLeft size={16} /> {t('configurator', 'backToModels')}
-        </button>
+    <div className="bg-white min-h-screen pt-4 pb-12">
+      {/* No px-4 on the container — padding is applied per-element below */}
+      <div className="container mx-auto max-w-7xl lg:max-w-6xl">
+        <div className="px-4">
+          <button
+            onClick={() => dispatch({ type: 'SET_MODEL', value: null })}
+            className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-secondary hover:text-primary transition-colors bg-transparent border-none cursor-pointer"
+          >
+            {t('configurator', 'backToModels')}
+          </button>
+        </div>
 
         {selectedModel === 'audi' ? (
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            <div className="w-full md:w-2/3 flex flex-col">
-              <div className="rounded-lg overflow-hidden shadow-sm bg-gray-100 relative">
-                <WheelPreview />
+          <div className="flex flex-col lg:flex-row lg:gap-6 lg:px-4 items-start">
+            {/* Preview — full-width on mobile, naturally, no negative-margin tricks */}
+            <div className="w-full lg:w-[54%] flex flex-col">
+              <p className="lg:hidden px-4 text-xs text-gray-400 text-center mb-2">{t('configurator', 'tapHint')}</p>
+              <div className="lg:rounded-xl overflow-hidden shadow-md bg-gray-100 relative select-none">
+                <WheelPreview onZoneClick={handleZoneClick} />
               </div>
-              <StitchingPreviewCard />
+              <img
+                src={`/wheels/audi/thread/thread_${state.threadColour}.png`}
+                alt="Stitching thread"
+                className="w-full h-auto object-contain lg:cursor-default cursor-pointer rounded-b-xl"
+                style={{ transition: 'opacity 0.35s ease' }}
+                onClick={() => setActiveZone({ zone: 'thread' })}
+              />
             </div>
 
-            <div className="w-full md:w-1/3 md:border-l border-gray-200">
-              <OptionsPanel onOpenInquiry={handleOpenInquiry} />
+            {/* Sidebar options panel */}
+            <div className="px-4 lg:px-0 w-full lg:w-[46%] lg:border-l border-gray-200 shrink-0">
+              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} />
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto">
-            <div className="rounded-lg overflow-hidden shadow-sm bg-gray-100 relative border border-gray-200">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="rounded-xl overflow-hidden shadow-md bg-gray-100 relative border border-gray-200">
               <WheelPreview />
             </div>
           </div>
@@ -330,6 +314,13 @@ function ConfiguratorContent() {
       </div>
 
       <PriceInquiryModal isOpen={inquiryOpen} onClose={() => setInquiryOpen(false)} />
+
+      {activeZone && (
+        <ZonePopover
+          zone={activeZone.zone}
+          onClose={() => setActiveZone(null)}
+        />
+      )}
     </div>
   );
 }
