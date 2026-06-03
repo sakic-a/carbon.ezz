@@ -256,11 +256,18 @@ app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
   }
 });
 
-
 app.get(
   "/api/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
 );
+
+app.get("/api/auth/facebook", (req, res) => {
+  res.status(501).json({
+    error: "Facebook OAuth not configured. Install passport-facebook and set FACEBOOK_APP_ID / FACEBOOK_APP_SECRET in .env"
+  });
+});
 
 app.get(
   "/api/auth/google/callback",
