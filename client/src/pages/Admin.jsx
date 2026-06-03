@@ -15,7 +15,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIES } from '../data/categories';
 import { getImageUrl } from '../utils/imageUrl';
-function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete }) {
+function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete, onToggleStock }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -43,7 +43,21 @@ function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete }) {
         <div className="font-bold truncate">{lang === 'bs' ? (p.nameBs || p.name) : p.name}</div>
         <div className="text-sm text-gray-500">€{Number(p.price).toFixed(2)} · {p.category}</div>
       </div>
-      <div className="flex gap-2 shrink-0">
+      <div className="flex gap-2 items-center shrink-0">
+        <button
+          onClick={() => onToggleStock(p)}
+          className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 ${
+            p.is_in_stock !== false
+              ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+              : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+          }`}
+          title={lang === 'bs' ? 'Kliknite da promijenite stanje' : 'Click to toggle stock status'}
+        >
+          {p.is_in_stock !== false 
+            ? (lang === 'bs' ? 'Na stanju' : 'In Stock')
+            : (lang === 'bs' ? 'Nije na stanju' : 'Out of Stock')
+          }
+        </button>
         <button onClick={() => onEdit(p)} className="text-blue-500 hover:bg-blue-50 p-2 rounded transition-colors">
           <Edit2 size={20} />
         </button>
@@ -212,6 +226,19 @@ export default function Admin() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handleToggleStock = async (product) => {
+        await updateProduct(product.id, {
+            name: product.name,
+            nameBs: product.nameBs,
+            price: parseFloat(product.price),
+            category: product.category,
+            image: product.image,
+            description: product.description,
+            gallery: product.gallery,
+            isInStock: product.is_in_stock === false
+        });
+    };
+
     const handleDragStart = ({ active }) => setActiveId(active.id);
 
     const handleDragEnd = ({ active, over }) => {
@@ -253,7 +280,8 @@ export default function Admin() {
                 category: pCategory,
                 image: pImage,
                 description: pDescription,
-                gallery: galleryArray
+                gallery: galleryArray,
+                isInStock: products.find(prod => prod.id === editingProductId)?.is_in_stock !== false
             });
             setEditingProductId(null);
         } else {
@@ -264,7 +292,8 @@ export default function Admin() {
                 category: pCategory,
                 image: pImage,
                 description: pDescription,
-                gallery: galleryArray
+                gallery: galleryArray,
+                isInStock: true
             });
         }
         setPName('');
@@ -635,6 +664,7 @@ export default function Admin() {
                                                     reorderMode={reorderMode}
                                                     onEdit={handleStartEdit}
                                                     onDelete={deleteProduct}
+                                                    onToggleStock={handleToggleStock}
                                                 />
                                             ))}
                                         </div>

@@ -20,6 +20,7 @@ export function ShopProvider({ children }) {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
   const addToCart = (product) => {
+    if (product.is_in_stock === false) return;
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {

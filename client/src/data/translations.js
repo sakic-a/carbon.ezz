@@ -40,6 +40,7 @@ export const translations = {
       price: "Price",
       filter: "Filter",
       viewAll: "View All Products",
+      outOfStock: "Out of Stock",
     },
     cart: {
       title: "Shopping Cart",
@@ -55,6 +56,8 @@ export const translations = {
       phone: "Phone Number",
       placeOrder: "Place Order",
       success: "Order placed successfully!",
+      outOfStockWarning: "Some items in your cart are out of stock. Please remove them before checking out.",
+      outOfStockBadge: "Out of Stock",
     },
     auth: {
       loginTitle: "Login",
@@ -95,6 +98,8 @@ export const translations = {
       save: "Save Product",
       reorder: "Reorder",
       reorderDone: "Save",
+      inStock: "In Stock",
+      outOfStock: "Out of Stock",
     },
     faq: {
       title: "Frequently Asked Questions",
@@ -217,6 +222,7 @@ export const translations = {
       price: "Cijena",
       filter: "Filtriraj",
       viewAll: "Pogledaj sve proizvode",
+      outOfStock: "Nije na stanju",
     },
     cart: {
       title: "Korpa",
@@ -232,6 +238,8 @@ export const translations = {
       phone: "Broj telefona",
       placeOrder: "Završi Narudžbu",
       success: "Narudžba uspješno poslana!",
+      outOfStockWarning: "Neki artikli u vašoj korpi nisu na stanju. Molimo uklonite ih prije plaćanja.",
+      outOfStockBadge: "Nije na stanju",
     },
     auth: {
       loginTitle: "Prijava",
@@ -272,6 +280,8 @@ export const translations = {
       save: "Sačuvaj Proizvod",
       reorder: "Preuredi",
       reorderDone: "Spasi",
+      inStock: "Na stanju",
+      outOfStock: "Nije na stanju",
     },
     faq: {
       title: "Česta Pitanja",

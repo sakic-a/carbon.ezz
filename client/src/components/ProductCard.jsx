@@ -30,6 +30,11 @@ export default function ProductCard({ product }) {
           alt={name}
           className="w-full h-full object-cover"
         />
+        {product.is_in_stock === false && (
+          <div className="absolute top-4 left-4 bg-red-600 text-white font-bold text-xs uppercase px-3 py-1.5 rounded-full shadow-lg z-10">
+            {t("shop", "outOfStock")}
+          </div>
+        )}
       </Link>
       <div className="p-5">
         <Link
@@ -47,13 +52,23 @@ export default function ProductCard({ product }) {
         {!isAdmin && (
           <button
             onClick={handleAdd}
-            className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded transition-colors ${added
+            disabled={product.is_in_stock === false}
+            className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded transition-colors ${
+              product.is_in_stock === false
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : added
                 ? "bg-green-500 text-white hover:bg-green-600"
                 : "bg-primary text-black hover:bg-yellow-400"
-              }`}
+            }`}
           >
-            {added ? <Check size={18} /> : <Plus size={18} />}
-            <span>{added ? "Added" : t("shop", "addToCart")}</span>
+            {product.is_in_stock === false ? (
+              <span>{t("shop", "outOfStock")}</span>
+            ) : (
+              <>
+                {added ? <Check size={18} /> : <Plus size={18} />}
+                <span>{added ? "Added" : t("shop", "addToCart")}</span>
+              </>
+            )}
           </button>
         )}
       </div>
