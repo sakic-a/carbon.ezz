@@ -56,7 +56,7 @@ function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete }) {
 }
 
 export default function Admin() {
-    const { user, getToken } = useAuth();
+    const { user, authLoading } = useAuth();
     const { t, lang } = useLanguage();
     const { products, addProduct, updateProduct, deleteProduct } = useShop();
     const navigate = useNavigate();
@@ -98,7 +98,7 @@ export default function Admin() {
         try {
             const res = await fetch("/api/upload", {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${getToken()}` },
+                credentials: "include",
                 body: formData,
             });
             const data = await res.json();
@@ -129,7 +129,7 @@ export default function Admin() {
         try {
             const res = await fetch("/api/upload-gallery", {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${getToken()}` },
+                credentials: "include",
                 body: formData,
             });
             const data = await res.json();
@@ -146,49 +146,36 @@ export default function Admin() {
         }
     };
     useEffect(() => {
+        if (authLoading) return;
         if (!user || user.role !== 'admin') {
             navigate('/login');
             return;
         }
-        fetch('/api/admin/orders', {
-            headers: {
-                "Authorization": `Bearer ${getToken()}`,
-            }
-        })
+        fetch('/api/admin/orders', { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch('/api/admin/messages', {
-            headers: {
-                 "Authorization": `Bearer ${getToken()}`,
-            }
-        })
+        fetch('/api/admin/messages', { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setMessages(data);
             })
             .catch(err => console.error("Failed to load messages", err));
-        fetch('/api/admin/configurator-inquiries', {
-            headers: {
-                 "Authorization": `Bearer ${getToken()}`,
-            }
-        })
+        fetch('/api/admin/configurator-inquiries', { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setInquiries(data);
             })
             .catch(err => console.error("Failed to load configurator inquiries", err));
-    }, [navigate, user]);
+    }, [navigate, user, authLoading]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
             await fetch(`/api/orders/${orderId}/status`, {
                 method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getToken()}`, 
-                },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
                 body: JSON.stringify({ status })
             });
             setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
@@ -228,10 +215,8 @@ export default function Admin() {
         try {
             const res = await fetch('/api/products/reorder', {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getToken()}`,
-                },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
                 body: JSON.stringify({ orderedIds: orderedProducts.map(p => p.id) }),
             });
             if (!res.ok) throw new Error(`${res.status}`);
@@ -279,10 +264,8 @@ export default function Admin() {
         try {
             const res = await fetch(`/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json' ,
-                    'Authorization': `Bearer ${getToken()}`, 
-                },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
                 body: JSON.stringify({ reply: replyText })
             });
             const data = await res.json();
@@ -298,9 +281,7 @@ export default function Admin() {
         try {
             const res = await fetch(`/api/admin/configurator-inquiries/${inquiryId}`, {
                 method: 'DELETE',
-                headers: { 
-                    'Authorization': `Bearer ${getToken()}`, 
-                }
+                credentials: "include",
             });
             const data = await res.json();
             if (data.success) {
@@ -314,10 +295,8 @@ export default function Admin() {
         try {
             const res = await fetch(`/api/admin/configurator-inquiries/${inqId}/reply`, {
                 method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json' ,
-                    'Authorization': `Bearer ${getToken()}`, 
-                },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
                 body: JSON.stringify({ reply: replyText })
             });
             const data = await res.json();
@@ -328,7 +307,7 @@ export default function Admin() {
             console.error("Failed to reply to configurator inquiry", err);
         }
     };
-    if (!user || user.role !== 'admin') return null;
+    if (authLoading || !user || user.role !== 'admin') return null;
     return (
         <div className="py-16 bg-gray-50 min-h-screen">
             <div className="container mx-auto px-4">
@@ -665,27 +644,34 @@ export default function Admin() {
                                 ) : (
                                     <div className="space-y-4">
                                         {messages.map(msg => (
-                                            <div key={msg.id} className="border border-gray-200 rounded p-4">
-                                                <div className="flex justify-between mb-2">
-                                                    <strong className="text-primary break-words min-w-0">{msg.name}</strong>
-                                                    <span className="text-sm text-gray-400">{msg.created_at ? new Date(msg.created_at).toLocaleDateString("en-GB") : "—"}</span>
+                                            <div key={msg.id} className="border border-gray-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex flex-col md:flex-row justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-extrabold text-lg text-black break-words">{msg.name}</h3>
+                                                        <p className="text-sm text-gray-500 break-words">
+                                                            {msg.email}
+                                                            {msg.phone && <a href={`tel:${msg.phone}`} className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600 hover:bg-gray-200">{msg.phone}</a>}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right text-sm text-gray-400 font-semibold self-start md:self-center">
+                                                        {msg.created_at ? new Date(msg.created_at).toLocaleString() : "—"}
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm text-gray-500 mb-3">
-                                                    {msg.email}
-                                                    {msg.phone && <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{msg.phone}</span>}
+                                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 text-sm mb-4">
+                                                    <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-xs">Message:</h4>
+                                                    <p className="text-gray-700 whitespace-pre-wrap break-words">{msg.message}</p>
                                                 </div>
-                                                <p className="bg-gray-50 p-3 rounded text-gray-700 mb-4 whitespace-pre-wrap break-words">{msg.message}</p>
                                                 {msg.reply ? (
-                                                    <div className="bg-green-50 p-3 rounded border border-green-100 ml-8">
+                                                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 mt-4">
                                                         <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
                                                         <p className="text-green-900 whitespace-pre-wrap break-words">{msg.reply}</p>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex gap-2 mt-2">
+                                                    <div className="flex gap-2 mt-4">
                                                         <input
                                                             type="text"
                                                             placeholder="Type a reply..."
-                                                            className="flex-1 border p-2 rounded text-sm"
+                                                            className="flex-1 border p-2 rounded-xl text-sm outline-none focus:border-black"
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter') {
                                                                     handleReply(msg.id, e.target.value);
@@ -694,7 +680,7 @@ export default function Admin() {
                                                             }}
                                                         />
                                                         <button
-                                                            className="bg-primary text-white px-3 py-1 rounded text-sm hover:bg-yellow-500"
+                                                            className="bg-primary text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-yellow-400"
                                                             onClick={(e) => {
                                                                 const input = e.target.previousSibling;
                                                                 handleReply(msg.id, input.value);
@@ -731,7 +717,7 @@ export default function Admin() {
                                                 <div className="flex flex-col md:flex-row justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
                                                     <div className="min-w-0">
                                                         <h3 className="font-extrabold text-lg text-black break-words">{inq.name}</h3>
-                                                        <p className="text-sm text-gray-500 break-words">{inq.email} {inq.phone && <span className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{inq.phone}</span>}</p>
+                                                        <p className="text-sm text-gray-500 break-words">{inq.email} {inq.phone && <a href={`tel:${inq.phone}`} className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600 hover:bg-gray-200">{inq.phone}</a>}</p>
                                                     </div>
                                                     <div className="text-right md:text-right text-sm text-gray-400 font-semibold self-start md:self-center">
                                                         {new Date(inq.created_at).toLocaleString()}

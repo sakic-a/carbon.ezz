@@ -8,7 +8,7 @@ import { useShop } from "../context/ShopContext";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { lang, toggleLanguage, t } = useLanguage();
-  const { user, logout, getToken } = useAuth();
+  const { user, authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const { cart } = useShop();
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -16,23 +16,19 @@ export default function Navbar() {
   const [updateCount, setUpdateCount] = useState(0);
 
   useEffect(() => {
-    if (!user || user.role === "admin") {
+    if (authLoading || !user || user.role === "admin") {
       setUpdateCount(0);
       return;
     }
 
     const checkUpdates = async () => {
       try {
-        const token = getToken();
-        if (!token) return;
-
-        const headers = { Authorization: `Bearer ${token}` };
         const emailEnc = encodeURIComponent(user.email);
 
         const [ordersRes, messagesRes, configRes] = await Promise.all([
-          fetch(`/api/orders/user/${emailEnc}`, { headers }).then((r) => r.ok ? r.json() : []),
-          fetch(`/api/messages/user/${emailEnc}`, { headers }).then((r) => r.ok ? r.json() : []),
-          fetch(`/api/configurator-inquiries/user/${emailEnc}`, { headers }).then((r) => r.ok ? r.json() : []),
+          fetch(`/api/orders/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
+          fetch(`/api/messages/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
+          fetch(`/api/configurator-inquiries/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
         ]);
 
         let totalCount = 0;
@@ -99,7 +95,7 @@ export default function Navbar() {
       window.removeEventListener("focus", checkUpdates);
       window.removeEventListener("dashboard-updates-read", checkUpdates);
     };
-  }, [user]);
+  }, [user, authLoading]);
 
   return (
     <nav className="sticky top-0 z-50 h-[70px] flex items-center bg-white shadow-sm">

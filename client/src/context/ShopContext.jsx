@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
 const ShopContext = createContext();
 
 export function ShopProvider({ children }) {
-  const { getToken } = useAuth();
   const [cart, setCart] = useState([]);
   const [productsList, setProductsList] = useState([]);
   useEffect(() => {
@@ -40,10 +38,8 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch("/api/products", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json" ,
-           "Authorization": `Bearer ${getToken()}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(product),
       });
       if (!response.ok) throw new Error("Failed to add product");
@@ -57,10 +53,8 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json" ,
-          "Authorization": `Bearer ${getToken()}`,
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(productData),
       });
       if (!response.ok) throw new Error("Failed to update product");
@@ -74,9 +68,7 @@ export function ShopProvider({ children }) {
     try {
       await fetch(`/api/products/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${getToken()}`,
-        },
+        credentials: "include",
       });
       setProductsList((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
@@ -87,7 +79,8 @@ export function ShopProvider({ children }) {
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           userEmail: user.email,
           shipping: shippingDetails,

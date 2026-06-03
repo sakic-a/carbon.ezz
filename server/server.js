@@ -1,7 +1,12 @@
 require('dotenv').config();
+
+if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET environment variable is required");
+if (!process.env.SESSION_SECRET) throw new Error("SESSION_SECRET environment variable is required");
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
 const jwt = require("jsonwebtoken");
 
@@ -15,11 +20,20 @@ require("./config/passport");
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER")
   ?.catch?.(err => console.error("Migration error:", err.message));
 
-app.use(cors({ origin: true, credentials: true }));
+const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, "uploads");
@@ -31,7 +45,7 @@ app.use("/uploads", express.static(uploadsDir));
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = req.cookies?.token || (authHeader && authHeader.split(" ")[1]);
 
   if (!token)
     return res.status(401).json({ success: false, error: "No token provided" });
@@ -54,7 +68,7 @@ console.log("PASSPORT LOADED");
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secret",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
   })
@@ -170,9 +184,8 @@ app.post("/api/auth/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.json({
+    res.cookie("token", token, COOKIE_OPTIONS).json({
       success: true,
-      token,
       user: {
         id: user.id,
         name: user.name,
@@ -217,9 +230,8 @@ app.post("/api/auth/register", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-    res.json({
+    res.cookie("token", token, COOKIE_OPTIONS).json({
       success: true,
-      token,
       user: {
         id: newUser.rows[0].id,
         name: newUser.rows[0].name,
@@ -283,11 +295,21 @@ app.get(
       { expiresIn: "7d" }
     );
     const user = { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role };
+    res.cookie("token", token, COOKIE_OPTIONS);
     res.redirect(
-      `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
+      `${allowedOrigin}/auth/google/callback?user=${encodeURIComponent(JSON.stringify(user))}`
     );
   }
 );
+
+app.post("/api/auth/logout", (req, res) => {
+  res.clearCookie("token", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  res.json({ success: true });
+});
+
+app.get("/api/auth/me", authenticateToken, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 app.post("/api/orders", authenticateToken, async (req, res) => {

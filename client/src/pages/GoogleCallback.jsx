@@ -8,12 +8,11 @@ export default function GoogleCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = searchParams.get("token");
     const userRaw = searchParams.get("user");
-    if (token && userRaw) {
+    if (userRaw) {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
-        loginWithToken(token, user);
+        loginWithToken(user);
         navigate(user.role === "admin" ? "/admin" : "/shop", { replace: true });
       } catch {
         navigate("/login", { replace: true });

@@ -30,7 +30,7 @@ import {
 const API = "/api";
 
 export default function UserDashboard() {
-  const { user, logout, getToken } = useAuth();
+  const { user, authLoading, logout } = useAuth();
   const { cart, removeFromCart } = useShop();
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function UserDashboard() {
     if (!user) return;
     setOrdersLoading(true);
     fetch(`${API}/orders/user/${encodeURIComponent(user.email)}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: "include",
     })
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
@@ -126,7 +126,7 @@ export default function UserDashboard() {
     if (!user) return;
     setMessagesLoading(true);
     fetch(`${API}/messages/user/${encodeURIComponent(user.email)}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: "include",
     })
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
@@ -174,7 +174,7 @@ export default function UserDashboard() {
     if (!user) return;
     setConfigInquiriesLoading(true);
     fetch(`${API}/configurator-inquiries/user/${encodeURIComponent(user.email)}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      credentials: "include",
     })
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
@@ -279,6 +279,10 @@ export default function UserDashboard() {
     }
   }, [showOrderSuccess]);
 
+  if (authLoading) {
+    return null;
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-20">
@@ -326,7 +330,7 @@ export default function UserDashboard() {
         setMsgEmail(user?.email || "");
         const updated = await fetch(
           `${API}/messages/user/${encodeURIComponent(user.email)}`,
-          { headers: { Authorization: `Bearer ${getToken()}` } }
+          { credentials: "include" }
         ).then((r) => r.json());
         setMessages(Array.isArray(updated) ? updated : []);
       }
@@ -346,7 +350,8 @@ export default function UserDashboard() {
     try {
       const res = await fetch(`${API}/auth/change-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: user.email, currentPassword: currentPw, newPassword: newPw }),
       });
       const data = await res.json();

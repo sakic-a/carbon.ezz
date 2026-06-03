@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -9,21 +10,21 @@ export function AuthProvider({ children }) {
         setUser(JSON.parse(storedUser));
       } catch {
         localStorage.removeItem("user");
-        localStorage.removeItem("token");
       }
     }
+    setAuthLoading(false);
   }, []);
   const login = async (email, password) => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.error || data.message || "Login failed");
-      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
       return { success: true, user: data.user };
@@ -36,12 +37,12 @@ export function AuthProvider({ children }) {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, email, password }),
       });
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.error || data.message || "Registration failed");
-      localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
       return { success: true };
@@ -50,19 +51,17 @@ export function AuthProvider({ children }) {
     }
   };
   const logout = () => {
-    localStorage.removeItem("token"); 
+    fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
     localStorage.removeItem("user");
     setUser(null);
   };
-  const getToken = () => localStorage.getItem("token");
-  const loginWithToken = (token, userData) => {
-    localStorage.setItem("token", token);
+  const loginWithToken = (userData) => {
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   };
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, getToken, loginWithToken, isAdmin: user?.role === "admin" }}
+      value={{ user, authLoading, login, register, logout, loginWithToken, isAdmin: user?.role === "admin" }}
     >
       {children}
     </AuthContext.Provider>
