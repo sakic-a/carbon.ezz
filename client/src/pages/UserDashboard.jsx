@@ -23,6 +23,8 @@ import {
   Search,
   TrendingUp,
   Star,
+  Sliders,
+  LogOut,
 } from "lucide-react";
 
 const API = "/api";
@@ -49,12 +51,18 @@ export default function UserDashboard() {
 
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
+  const [configInquiries, setConfigInquiries] = useState([]);
+  const [configInquiriesLoading, setConfigInquiriesLoading] = useState(true);
   const [msgText, setMsgText] = useState("");
   const [msgPhone, setMsgPhone] = useState("");
   const [msgName, setMsgName] = useState("");
   const [msgEmail, setMsgEmail] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSuccess, setMsgSuccess] = useState("");
+
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [newInquiriesCount, setNewInquiriesCount] = useState(0);
 
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -76,8 +84,36 @@ export default function UserDashboard() {
         return r.json();
       })
       .then((data) => {
-        setOrders(Array.isArray(data) ? data : []);
+        const orderList = Array.isArray(data) ? data : [];
+        setOrders(orderList);
         setOrdersLoading(false);
+
+        // Check for new order updates
+        const storedKey = `read_orders_status_${user.email}`;
+        let storedStatuses = {};
+        try {
+          storedStatuses = JSON.parse(localStorage.getItem(storedKey)) || {};
+        } catch (e) {}
+
+        let newCount = 0;
+        orderList.forEach((o) => {
+          const prevStatus = storedStatuses[o.id];
+          const isFirstLoad = Object.keys(storedStatuses).length === 0;
+          if (!isFirstLoad && (!prevStatus || prevStatus !== o.status)) {
+            newCount++;
+          }
+        });
+        setNewOrdersCount(newCount);
+
+        if (activeTab === "orders") {
+          const newStatuses = {};
+          orderList.forEach((o) => {
+            newStatuses[o.id] = o.status;
+          });
+          localStorage.setItem(storedKey, JSON.stringify(newStatuses));
+          setNewOrdersCount(0);
+          window.dispatchEvent(new Event("dashboard-updates-read"));
+        }
       })
       .catch(() => setOrdersLoading(false));
   };
@@ -97,10 +133,143 @@ export default function UserDashboard() {
         return r.json();
       })
       .then((data) => {
-        setMessages(Array.isArray(data) ? data : []);
+        const msgList = Array.isArray(data) ? data : [];
+        setMessages(msgList);
         setMessagesLoading(false);
+
+        // Check for new message replies
+        const storedKey = `seen_messages_replies_${user.email}`;
+        let storedReplies = {};
+        try {
+          storedReplies = JSON.parse(localStorage.getItem(storedKey)) || {};
+        } catch (e) {}
+
+        let newCount = 0;
+        msgList.forEach((m) => {
+          if (m.reply) {
+            const prevReply = storedReplies[m.id];
+            if (prevReply !== m.reply) {
+              newCount++;
+            }
+          }
+        });
+        setNewMessagesCount(newCount);
+
+        if (activeTab === "inquiries") {
+          const newReplies = {};
+          msgList.forEach((m) => {
+            if (m.reply) {
+              newReplies[m.id] = m.reply;
+            }
+          });
+          localStorage.setItem(storedKey, JSON.stringify(newReplies));
+          setNewMessagesCount(0);
+          window.dispatchEvent(new Event("dashboard-updates-read"));
+        }
       })
       .catch(() => setMessagesLoading(false));
+  }, [user]);
+
+  const fetchConfigInquiries = () => {
+    if (!user) return;
+    setConfigInquiriesLoading(true);
+    fetch(`${API}/configurator-inquiries/user/${encodeURIComponent(user.email)}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        const inqList = Array.isArray(data) ? data : [];
+        setConfigInquiries(inqList);
+        setConfigInquiriesLoading(false);
+
+        // Check for new configurator inquiry replies
+        const storedKey = `seen_config_replies_${user.email}`;
+        let storedReplies = {};
+        try {
+          storedReplies = JSON.parse(localStorage.getItem(storedKey)) || {};
+        } catch (e) {}
+
+        let newCount = 0;
+        inqList.forEach((inq) => {
+          if (inq.reply) {
+            const prevReply = storedReplies[inq.id];
+            if (prevReply !== inq.reply) {
+              newCount++;
+            }
+          }
+        });
+        setNewInquiriesCount(newCount);
+
+        if (activeTab === "configurator") {
+          const newReplies = {};
+          inqList.forEach((inq) => {
+            if (inq.reply) {
+              newReplies[inq.id] = inq.reply;
+            }
+          });
+          localStorage.setItem(storedKey, JSON.stringify(newReplies));
+          setNewInquiriesCount(0);
+          window.dispatchEvent(new Event("dashboard-updates-read"));
+        }
+      })
+      .catch(() => setConfigInquiriesLoading(false));
+  };
+
+  useEffect(() => {
+    fetchConfigInquiries();
+  }, [user]);
+
+  // Sync notification badges when activeTab changes
+  useEffect(() => {
+    if (!user) return;
+    let didChange = false;
+    if (activeTab === "orders" && orders.length > 0) {
+      const storedKey = `read_orders_status_${user.email}`;
+      const newStatuses = {};
+      orders.forEach((o) => {
+        newStatuses[o.id] = o.status;
+      });
+      localStorage.setItem(storedKey, JSON.stringify(newStatuses));
+      setNewOrdersCount(0);
+      didChange = true;
+    }
+    if (activeTab === "inquiries" && messages.length > 0) {
+      const storedKey = `seen_messages_replies_${user.email}`;
+      const newReplies = {};
+      messages.forEach((m) => {
+        if (m.reply) {
+          newReplies[m.id] = m.reply;
+        }
+      });
+      localStorage.setItem(storedKey, JSON.stringify(newReplies));
+      setNewMessagesCount(0);
+      didChange = true;
+    }
+    if (activeTab === "configurator" && configInquiries.length > 0) {
+      const storedKey = `seen_config_replies_${user.email}`;
+      const newReplies = {};
+      configInquiries.forEach((inq) => {
+        if (inq.reply) {
+          newReplies[inq.id] = inq.reply;
+        }
+      });
+      localStorage.setItem(storedKey, JSON.stringify(newReplies));
+      setNewInquiriesCount(0);
+      didChange = true;
+    }
+    if (didChange) {
+      window.dispatchEvent(new Event("dashboard-updates-read"));
+    }
+  }, [activeTab, orders, messages, configInquiries, user]);
+
+  useEffect(() => {
+    if (user) {
+      setMsgName(user.name || "");
+      setMsgEmail(user.email || "");
+    }
   }, [user]);
 
   useEffect(() => {
@@ -153,8 +322,8 @@ export default function UserDashboard() {
         setMsgSuccess(td("messageSent"));
         setMsgText("");
         setMsgPhone("");
-        setMsgName("");
-        setMsgEmail("");
+        setMsgName(user?.name || "");
+        setMsgEmail(user?.email || "");
         const updated = await fetch(
           `${API}/messages/user/${encodeURIComponent(user.email)}`,
           { headers: { Authorization: `Bearer ${getToken()}` } }
@@ -197,6 +366,7 @@ export default function UserDashboard() {
   const dashTrans = {
     en: {
       title: "My Account", orders: "My Orders", inquiries: "Messages",
+      configInquiries: "Design Inquiries", noConfigInquiries: "You have no custom design inquiries yet.",
       cart: "Cart", password: "Change Password", noOrders: "You have no orders yet.",
       orderDate: "Date", orderTotal: "Total", orderStatus: "Status", orderItems: "Items",
       viewDetails: "View Details", hide: "Hide",
@@ -222,6 +392,7 @@ export default function UserDashboard() {
     },
     bs: {
       title: "Moj Profil", orders: "Moje Narudžbe", inquiries: "Poruke",
+      configInquiries: "Upiti za dizajn", noConfigInquiries: "Nemate upita za dizajn.",
       cart: "Korpa", password: "Promjena Šifre", noOrders: "Nemate narudžbi.",
       orderDate: "Datum", orderTotal: "Ukupno", orderStatus: "Status", orderItems: "Artikli",
       viewDetails: "Detalji", hide: "Sakrij",
@@ -297,6 +468,7 @@ export default function UserDashboard() {
   const tabs = [
     { id: "orders", label: td("orders"), icon: ShoppingBag },
     { id: "inquiries", label: td("inquiries"), icon: MessageSquare },
+    { id: "configurator", label: td("configInquiries"), icon: Sliders },
     { id: "cart", label: td("cart"), icon: ShoppingCart },
     { id: "password", label: td("password"), icon: Lock },
   ];
@@ -329,7 +501,7 @@ export default function UserDashboard() {
             onClick={() => { logout(); navigate("/dashboard"); }}
             className="text-sm font-semibold text-secondary hover:text-primary transition-colors flex items-center gap-1"
           >
-            <X size={16} /> {td("logout")}
+            <LogOut size={16} /> {td("logout")}
           </button>
         </div>
 
@@ -349,6 +521,21 @@ export default function UserDashboard() {
               >
                 <Icon size={16} />
                 {tab.label}
+                {tab.id === "orders" && newOrdersCount > 0 && (
+                  <span className="ml-1 bg-black text-primary text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {newOrdersCount}
+                  </span>
+                )}
+                {tab.id === "inquiries" && newMessagesCount > 0 && (
+                  <span className="ml-1 bg-black text-primary text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {newMessagesCount}
+                  </span>
+                )}
+                {tab.id === "configurator" && newInquiriesCount > 0 && (
+                  <span className="ml-1 bg-black text-primary text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {newInquiriesCount}
+                  </span>
+                )}
                 {tab.id === "cart" && cart.length > 0 && (
                   <span className="ml-1 bg-black text-primary text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                     {cart.reduce((a, i) => a + i.quantity, 0)}
@@ -481,14 +668,8 @@ export default function UserDashboard() {
                           {order.shipping_city} {order.shipping_zip},{" "}
                           {order.shipping_country}
                           {order.shipping_phone && (
-                            <span className="ml-2">
-                              📞{" "}
-                              <a
-                                href={`tel:${order.shipping_phone.replace(/\s+/g, "")}`}
-                                className="text-primary underline underline-offset-2 hover:text-yellow-500 transition-colors"
-                              >
-                                {order.shipping_phone}
-                              </a>
+                            <span className="ml-2 text-gray-600">
+                              {order.shipping_phone}
                             </span>
                           )}
                         </div>
@@ -546,7 +727,7 @@ export default function UserDashboard() {
                     className="w-full p-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none sm:col-span-2"
                     placeholder={td("phone")}
                     value={msgPhone}
-                    onChange={(e) => setMsgPhone(e.target.value)}
+                    onChange={(e) => setMsgPhone(e.target.value.replace(/\D/g, ""))}
                     required
                   />
                 </div>
@@ -734,6 +915,135 @@ export default function UserDashboard() {
                 {pwLoading ? "..." : td("changePw")}
               </button>
             </form>
+          </div>
+        )}
+
+        {activeTab === "configurator" && (
+          <div className="space-y-4">
+            {configInquiriesLoading ? (
+              <div className="text-center py-16 text-gray-400">
+                <p>Loading...</p>
+              </div>
+            ) : configInquiries.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
+                <Sliders size={48} className="mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-500">{td("noConfigInquiries")}</p>
+                <Link
+                  to="/configurator"
+                  className="mt-4 inline-block bg-primary text-black px-5 py-2 rounded-lg text-sm font-bold hover:bg-yellow-400 transition-colors"
+                >
+                  {lang === "bs" ? "Otvori Konfigurator" : "Open Configurator"}
+                </Link>
+              </div>
+            ) : (
+              configInquiries.map((inq) => (
+                <div key={inq.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 relative">
+                  <div className="flex flex-col md:flex-row justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
+                    <div>
+                      <h3 className="font-extrabold text-lg text-black capitalize">
+                        {inq.selected_model} Steering Wheel
+                      </h3>
+                      <p className="text-sm text-gray-500 font-medium">
+                        {inq.car_model}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs text-gray-400 font-semibold self-start md:self-center">
+                      {formatDate(inq.created_at)}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 text-sm mb-4">
+                    <h4 className="font-bold text-gray-800 mb-2 uppercase tracking-wider text-xs">
+                      {lang === "bs" ? "Specifikacija:" : "Specification:"}
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-gray-600 capitalize">
+                      <div>
+                        <span className="font-semibold text-gray-700">Shape:</span>{" "}
+                        {t("configurator", inq.wheel_shape) || inq.wheel_shape}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Top Grip:</span>{" "}
+                        {t("configurator", inq.top_material) || inq.top_material}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Side Grips:</span>{" "}
+                        {t("configurator", inq.side_material) || inq.side_material}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Bottom Grip:</span>{" "}
+                        {t("configurator", inq.bottom_material) || inq.bottom_material}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Stitching:</span>{" "}
+                        <span className="inline-flex items-center gap-1.5 font-medium text-black">
+                          <span
+                            className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                            style={{
+                              backgroundColor:
+                                inq.thread_colour === "white"
+                                  ? "#ffffff"
+                                  : inq.thread_colour === "black"
+                                  ? "#000000"
+                                  : inq.thread_colour,
+                            }}
+                          />
+                          {inq.thread_colour}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Ring:</span>{" "}
+                        {inq.ring_enabled ? (
+                          <span className="inline-flex items-center gap-1.5 font-medium text-black">
+                            <span
+                              className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                              style={{ backgroundColor: inq.ring_colour }}
+                            />
+                            {inq.ring_colour}
+                          </span>
+                        ) : (
+                          "No Ring"
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {inq.notes && (
+                    <div className="bg-yellow-50/50 rounded-xl p-4 border border-yellow-100 text-sm mb-4">
+                      <h4 className="font-bold text-yellow-800 mb-1 uppercase tracking-wider text-xs">
+                        {lang === "bs" ? "Napomena:" : "Notes:"}
+                      </h4>
+                      <p className="text-gray-700 italic break-words">"{inq.notes}"</p>
+                    </div>
+                  )}
+
+                  <div className={`rounded-xl px-4 py-3 text-sm ${inq.reply ? "bg-primary/10 border border-primary/20" : "bg-gray-100 text-gray-400"}`}>
+                    {inq.reply ? (
+                      <>
+                        <p className="font-semibold text-xs text-gray-600 mb-1">
+                          {lang === "bs" ? "Odgovor Carbon.ez:" : "Reply from Carbon.ez:"}
+                        </p>
+                        <p className="text-gray-800 whitespace-pre-wrap break-words">{inq.reply}</p>
+                      </>
+                    ) : (
+                      <p className="flex items-center gap-1.5 italic">
+                        <AlertCircle size={13} />
+                        {lang === "bs" ? "Čeka se odgovor na cijenu..." : "Awaiting price quote..."}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+            {!configInquiriesLoading && (
+              <div className="text-center pt-2">
+                <button
+                  onClick={fetchConfigInquiries}
+                  className="text-xs text-gray-400 hover:text-primary transition-colors underline"
+                >
+                  {lang === "bs" ? "Osvježi upite" : "Refresh Inquiries"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
