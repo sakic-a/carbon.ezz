@@ -155,7 +155,7 @@ export default function Navbar() {
               onClick={toggleLanguage}
               className="flex items-center gap-2 py-2"
             >
-              <Globe size={18} /> Language: {lang.toUpperCase()}
+              <Globe size={18} /> {lang === "bs" ? "Jezik" : "Language"}: {lang.toUpperCase()}
             </button>
 
             <Link
@@ -163,7 +163,7 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-2 py-2"
             >
-              <ShoppingCart size={18} /> Cart ({cartCount})
+              <ShoppingCart size={18} /> {t("nav", "cart")} ({cartCount})
             </Link>
 
             {user?.role !== "admin" && (
@@ -181,7 +181,7 @@ export default function Navbar() {
                 onClick={() => { logout(); setIsOpen(false); navigate("/login"); }}
                 className="text-left font-semibold py-2 text-secondary"
               >
-                Logout
+                {t("nav", "logout")}
               </button>
             )}
           </div>
