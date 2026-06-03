@@ -32,6 +32,7 @@ export const translations = {
       addToCart: "Add to Cart",
       price: "Price",
       filter: "Filter",
+      viewAll: "View All Products",
     },
     cart: {
       title: "Shopping Cart",
@@ -42,7 +43,6 @@ export const translations = {
       shippingTitle: "Shipping Details",
       address: "Address",
       city: "City",
-      zip: "Zip Code",
       zip: "Zip Code",
       country: "Country",
       phone: "Phone Number",
@@ -73,6 +73,7 @@ export const translations = {
       productPrice: "Price",
       productCategory: "Category",
       productImage: "Product Image",
+<<<<<<< HEAD
       productGallery: "Additional Gallery Images",
       chooseMainImage: "Choose Main Image",
       uploadingImage: "Uploading image...",
@@ -84,6 +85,8 @@ export const translations = {
       cancel: "Cancel",
       editProduct: "Edit Product",
       update: "Update Product",
+=======
+>>>>>>> generalFixes
       delete: "Delete",
       save: "Save Product",
       reorder: "Reorder",
@@ -97,13 +100,26 @@ export const translations = {
       a2: "Yes, we ship to most countries.",
       contactTitle: "Contact Us",
       contactDesc: "Any questions? Send us a message.",
+      addressLabel: "Address",
+      phoneLabel: "Phone",
       message: "Message",
+      phone: "Phone Number",
       send: "Send Message",
       success: "Message sent!",
     },
     about: {
       p1: "Welcome to Carbon.ez, where precision meets performance. We believe the steering wheel is the ultimate connection between driver and machine. Born from a passion for motorsports, we curate a collection of custom carbon fiber steering wheels designed to transform your driving experience.",
       p2: "Our name reflects our mission: Carbon for lightweight strength and racing heritage, and .ez because upgrading your interior should be seamless. From LED displays to forged carbon finishes, we put control back in your hands.",
+    },
+    gallery: {
+      subtitle: "A glimpse into our premium collection and happy customers.",
+      loading: "Loading...",
+    },
+    home: {
+      configureYours: "Configure Yours",
+      designTitle: "Design Your Perfect Steering Wheel",
+      designSubtitle: "Use our real-time customizer to choose your steering wheel shape, premium materials, and custom stitching.",
+      launchConfigurator: "Launch Configurator",
     },
     configurator: {
       wheelType: "Wheel Shape",
@@ -175,6 +191,7 @@ export const translations = {
       addToCart: "Dodaj u Korpu",
       price: "Cijena",
       filter: "Filtriraj",
+      viewAll: "Pogledaj sve proizvode",
     },
     cart: {
       title: "Korpa",
@@ -185,7 +202,6 @@ export const translations = {
       shippingTitle: "Detalji Dostave",
       address: "Adresa",
       city: "Grad",
-      zip: "Poštanski broj",
       zip: "Poštanski broj",
       country: "Država",
       phone: "Broj telefona",
@@ -215,6 +231,7 @@ export const translations = {
       productName: "Naziv Proizvoda",
       productPrice: "Cijena",
       productCategory: "Kategorija",
+<<<<<<< HEAD
       productImage: "Slika proizvoda",
       productGallery: "Dodatne slike galerije",
       chooseMainImage: "Odaberi glavnu sliku",
@@ -227,6 +244,9 @@ export const translations = {
       cancel: "Otkaži",
       editProduct: "Uredi proizvod",
       update: "Ažuriraj proizvod",
+=======
+      productImage: "Slika Proizvoda",
+>>>>>>> generalFixes
       delete: "Obriši",
       save: "Sačuvaj Proizvod",
       reorder: "Preuredi",
@@ -240,13 +260,26 @@ export const translations = {
       a2: "Da, šaljemo u većinu zemalja.",
       contactTitle: "Kontaktirajte Nas",
       contactDesc: "Imate pitanja? Pošaljite nam poruku.",
+      addressLabel: "Adresa",
+      phoneLabel: "Telefon",
       message: "Poruka",
+      phone: "Broj telefona",
       send: "Pošalji Poruku",
       success: "Poruka poslana!",
     },
     about: {
       p1: "Dobrodošli u Carbon.ez, gdje preciznost susreće performanse. Vjerujemo da je volan krajnja veza između vozača i mašine. Rođeni iz strasti prema motosportu, nudimo kolekciju prilagođenih karbonskih volana dizajniranih da transformišu vaše iskustvo vožnje.",
       p2: "Naše ime odražava našu misiju: Carbon za laganu snagu i trkačko nasljeđe, i .ez jer nadogradnja vašeg enterijera treba da bude jednostavna. Od LED displeja do završne obrade od kovanog karbona, vraćamo kontrolu u vaše ruke.",
+    },
+    gallery: {
+      subtitle: "Pogled na našu premium kolekciju i zadovoljne kupce.",
+      loading: "Učitavanje...",
+    },
+    home: {
+      configureYours: "Dizajnirajte svoj",
+      designTitle: "Dizajnirajte Svoj Savršeni Volan",
+      designSubtitle: "Upotrijebite naš konfigurator u stvarnom vremenu za odabir oblika volana, premium materijala i boja šavova.",
+      launchConfigurator: "Otvori Konfigurator",
     },
     configurator: {
       wheelType: "Oblik volana",
