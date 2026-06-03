@@ -1,56 +1,28 @@
-import { useState, useEffect } from 'react';
 import { useConfigurator } from '../../context/ConfiguratorContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { ringColours } from '../../data/configuratorConstants';
+import { ringColours, threadColours } from '../../data/configuratorConstants';
 
-function StitchingPreviewCard() {
-  const { state } = useConfigurator();
-  const { t } = useLanguage();
-  const { threadColour } = state;
-  const [imageError, setImageError] = useState(false);
 
-  useEffect(() => { setImageError(false); }, [threadColour]);
-
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mb-6">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-black mb-3">
-        {t('configurator', 'stitching')}
-      </h3>
-      <div className="relative border border-gray-100 rounded-lg bg-gray-50 flex flex-col items-center justify-center p-4 min-h-[140px]">
-        {!imageError ? (
-          <img
-            src={`/wheels/thread/${threadColour}.png`}
-            alt={`${threadColour} Stitching`}
-            className="w-full h-auto object-contain rounded shadow-sm"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="w-full h-24 bg-gray-50/30 rounded" />
-        )}
-      </div>
-    </div>
-  );
-}
-
-const topOptions    = ['smooth', 'alcantara', 'carbon', 'perforated'];
+const topOptions    = ['smooth', 'alcantara', 'perforated', 'carbon'];
 const sideOptions   = ['smooth', 'alcantara', 'perforated'];
-const bottomOptions = ['smooth', 'alcantara', 'carbon', 'perforated'];
+const bottomOptions = ['smooth', 'alcantara', 'perforated', 'carbon'];
 
-function MaterialSelector({ label, options, value, actionType, highlight, className = 'mb-6' }) {
+function MaterialSelector({ label, options, value, actionType, highlight, stretch = true, equalWidth = false, className = 'mb-6' }) {
   const { dispatch } = useConfigurator();
   const { t } = useLanguage();
 
   return (
-    <div
-      className={`${className} transition-all duration-300`}
-    >
-      <p className={`text-sm font-semibold uppercase tracking-wide mb-2 transition-colors duration-300 ${highlight ? 'text-primary' : ''}`}>{label}</p>
-      <div className="flex flex-wrap gap-2">
+    <div className={`${className} transition-all duration-300`}>
+      <p className={`text-sm font-semibold uppercase tracking-wide mb-2 transition-all duration-300 border-l-[3px] pl-2 ${highlight ? 'border-primary' : 'border-transparent'}`}>{label}</p>
+      <div
+        className={equalWidth ? 'grid w-max gap-2' : 'flex flex-wrap gap-2'}
+        style={equalWidth ? { gridTemplateColumns: `repeat(${options.length}, 1fr)` } : {}}
+      >
         {options.map(option => (
           <button
             key={option}
             onClick={() => dispatch({ type: actionType, value: option })}
-            className={`px-4 py-2 rounded border text-sm capitalize transition-colors
+            className={`${equalWidth ? 'w-full' : stretch ? 'flex-1' : ''} px-4 py-2 rounded border text-sm capitalize transition-colors
               ${value === option
                 ? 'bg-black text-white border-black'
                 : 'bg-white text-black border-gray-300 hover:border-black'
@@ -71,8 +43,8 @@ export default function OptionsPanel({ onOpenInquiry, activeZone }) {
   return (
     <div className="p-6">
       {/* Wheel shape */}
-      <div className="mb-6 pl-3 border-l-4 border-transparent">
-        <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'wheelType')}</p>
+      <div className="mb-6">
+        <p className={`text-sm font-semibold uppercase tracking-wide mb-2 transition-all duration-300 border-l-[3px] pl-2 ${activeZone === 'hub' ? 'border-primary' : 'border-transparent'}`}>{t('configurator', 'wheelType')}</p>
         <div className="flex flex-wrap gap-2">
           {['factory', 'flat', 'full'].map(shape => (
             <button
@@ -91,68 +63,56 @@ export default function OptionsPanel({ onOpenInquiry, activeZone }) {
       </div>
 
       {/* Top + Bottom side by side */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-8 mb-6">
         <MaterialSelector label={t('configurator', 'top')}    options={topOptions}    value={state.topMaterial}    actionType="SET_TOP"    highlight={activeZone === 'top'}    className="" />
         <MaterialSelector label={t('configurator', 'bottom')} options={bottomOptions} value={state.bottomMaterial} actionType="SET_BOTTOM" highlight={activeZone === 'bottom'} className="" />
       </div>
 
-      <MaterialSelector label={t('configurator', 'sides')} options={sideOptions} value={state.sideMaterial} actionType="SET_SIDE" highlight={activeZone === 'sides'} />
+      <MaterialSelector label={t('configurator', 'sides')} options={sideOptions} value={state.sideMaterial} actionType="SET_SIDE" highlight={activeZone === 'sides'} equalWidth />
 
       {/* Ring toggle + colour */}
       <div className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'ring')}</p>
-        <button
-          onClick={() => dispatch({ type: 'SET_RING', value: !state.ringEnabled })}
-          className={`px-4 py-2 rounded border text-sm transition-colors
-            ${state.ringEnabled
-              ? 'bg-black text-white border-black'
-              : 'bg-white text-black border-gray-300 hover:border-black'
-            }`}
-        >
-          {state.ringEnabled ? t('configurator', 'removeRing') : t('configurator', 'addRing')}
-        </button>
-      </div>
-      {state.ringEnabled && (
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'ringColour')}</p>
-          <div className="flex gap-2 flex-wrap">
-            {ringColours.map(colour => (
-              <button
-                key={colour}
-                title={t('configurator', colour)}
-                onClick={() => dispatch({ type: 'SET_RING_COLOUR', value: colour })}
-                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110
-                  ${state.ringColour === colour ? 'border-black scale-110' : 'border-transparent'}`}
-                style={{ backgroundColor: colour }}
-              />
-            ))}
-          </div>
+        <p className="text-sm font-semibold uppercase tracking-wide mb-2 border-l-[3px] border-transparent pl-2">{t('configurator', 'ring')}</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => dispatch({ type: 'SET_RING', value: !state.ringEnabled })}
+            className={`px-4 py-2 rounded border text-sm transition-colors shrink-0
+              ${state.ringEnabled
+                ? 'bg-black text-white border-black'
+                : 'bg-white text-black border-gray-300 hover:border-black'
+              }`}
+          >
+            {state.ringEnabled ? t('configurator', 'removeRing') : t('configurator', 'addRing')}
+          </button>
+          {state.ringEnabled && (
+            <div className="flex gap-2 flex-wrap">
+              {ringColours.map(colour => (
+                <button
+                  key={colour}
+                  title={colour.charAt(0).toUpperCase() + colour.slice(1)}
+                  onClick={() => dispatch({ type: 'SET_RING_COLOUR', value: colour })}
+                  className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110
+                    ${state.ringColour === colour ? 'border-black scale-110' : colour === 'white' ? 'border-gray-300' : 'border-transparent'}`}
+                  style={{ backgroundColor: colour }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="lg:hidden">
-        <StitchingPreviewCard />
       </div>
 
+      {/* Thread colour picker */}
       <div className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-wide mb-2">{t('configurator', 'stitching')}</p>
+        <p className="text-sm font-semibold uppercase tracking-wide mb-2 border-l-[3px] border-transparent pl-2">{t('configurator', 'stitching')}</p>
         <div className="flex gap-2 flex-wrap">
-          {[
-            { id: 'white', color: '#ffffff', label: 'threadWhite' },
-            { id: 'red', color: 'red', label: 'red' },
-            { id: 'blue', color: 'blue', label: 'blue' },
-            { id: 'yellow', color: 'yellow', label: 'yellow' },
-            { id: 'green', color: 'green', label: 'green' },
-            { id: 'orange', color: 'orange', label: 'orange' },
-            { id: 'black', color: 'black', label: 'black' }
-          ].map(thread => (
+          {threadColours.map(colour => (
             <button
-              key={thread.id}
-              title={t('configurator', thread.label)}
-              onClick={() => dispatch({ type: 'SET_THREAD', value: thread.id })}
+              key={colour}
+              title={colour.charAt(0).toUpperCase() + colour.slice(1)}
+              onClick={() => dispatch({ type: 'SET_THREAD', value: colour })}
               className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110
-                ${state.threadColour === thread.id ? 'border-black scale-110' : 'border-gray-300'}`}
-              style={{ backgroundColor: thread.color }}
+                ${state.threadColour === colour ? 'border-black scale-110' : colour === 'white' ? 'border-gray-300' : 'border-transparent'}`}
+              style={{ backgroundColor: colour }}
             />
           ))}
         </div>

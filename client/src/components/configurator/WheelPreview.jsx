@@ -26,16 +26,23 @@ const ZONES = [
   {
     key: 'sides_left',
     zoneId: 'sides',
-    style: { left: '1.7%', top: '18.4%', width: '33.9%', height: '70.1%' },
+    style: { left: '1.7%', top: '21.4%', width: '33.9%', height: '70.1%' },
     anchor: 'right',
     borderRadius: '50% 0 0 50%',
   },
   {
     key: 'sides_right',
     zoneId: 'sides',
-    style: { left: '64.5%', top: '18.5%', width: '34.2%', height: '69.7%' },
+    style: { left: '64.5%', top: '21.5%', width: '34.2%', height: '69.7%' },
     anchor: 'left',
     borderRadius: '0 50% 50% 0',
+  },
+  {
+    key: 'hub',
+    zoneId: 'hub',
+    style: { left: '30.21%', top: '31.38%', width: '39.58%', height: '39.58%' },
+    anchor: 'bottom',
+    borderRadius: '50%',
   },
 ];
 
@@ -81,12 +88,17 @@ const OUTLINES = [
   {
     svgKey: 'sides_left',
     zoneId: 'sides',
-    d: 'M 98,135 C 0,135 0,632 98,632 L 196,607 C 85,607 85,158 196,158 Z',
+    d: 'M 98,158 C 0,158 0,655 98,655 L 196,630 C 85,630 85,181 196,181 Z',
   },
   {
     svgKey: 'sides_right',
     zoneId: 'sides',
-    d: 'M 670,135 C 768,135 768,632 670,632 L 572,607 C 683,607 683,158 572,158 Z',
+    d: 'M 670,158 C 768,158 768,655 670,655 L 572,630 C 683,630 683,181 572,181 Z',
+  },
+  {
+    svgKey: 'hub',
+    zoneId: 'hub',
+    d: 'M 232,393 A 152,152 0 1,0 536,393 A 152,152 0 1,0 232,393 Z',
   },
 ];
 

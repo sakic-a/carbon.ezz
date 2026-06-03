@@ -10,40 +10,6 @@ import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, X } from 'lucide-react';
 
-function StitchingPreviewCard() {
-  const { state } = useConfigurator();
-  const { t } = useLanguage();
-  const { threadColour } = state;
-  const [imageError, setImageError] = useState(false);
-
-  useEffect(() => {
-    setImageError(false);
-  }, [threadColour]);
-
-  const imageUrl = `/wheels/thread/${threadColour}.png`;
-
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm mt-6">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-black mb-3">
-        {t('configurator', 'stitching')}
-      </h3>
-      <div className="relative border border-gray-100 rounded-lg bg-gray-50 flex flex-col items-center justify-center p-4 min-h-[140px] transition-all duration-300">
-        {!imageError ? (
-          <div className="w-full flex items-center justify-center">
-            <img 
-              src={imageUrl} 
-              alt={`${threadColour} Stitching`} 
-              className="w-full h-auto object-contain rounded shadow-sm"
-              onError={() => setImageError(true)}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-24 flex items-center justify-center bg-gray-50/30 rounded" />
-        )}
-      </div>
-    </div>
-  );
-}
 
 function PriceInquiryModal({ isOpen, onClose }) {
   const { state, dispatch } = useConfigurator();
@@ -142,7 +108,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
             </div>
             {state.ringEnabled && (
               <div className="col-span-2">
-                <span className="font-semibold">{lang === "bs" ? "Prsten:" : "Colour Ring:"}</span>{" "}
+                <span className="font-semibold">{lang === "bs" ? "Prsten:" : "Ring:"}</span>{" "}
                 <span className="inline-flex items-center gap-1.5 font-medium text-black">
                   <span 
                     className="w-3 h-3 rounded-full border border-gray-300 inline-block"
@@ -304,38 +270,37 @@ function ConfiguratorContent() {
   }
 
   return (
-    <div className="bg-white min-h-screen py-12">
+    <div className="bg-white min-h-screen pt-4 pb-12">
       {/* No px-4 on the container — padding is applied per-element below */}
-      <div className="container mx-auto max-w-7xl lg:max-w-4xl">
+      <div className="container mx-auto max-w-7xl lg:max-w-6xl">
         <div className="px-4">
           <button
             onClick={() => dispatch({ type: 'SET_MODEL', value: null })}
             className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-secondary hover:text-primary transition-colors bg-transparent border-none cursor-pointer"
           >
-            <ChevronLeft size={16} /> {t('configurator', 'backToModels')}
+            {t('configurator', 'backToModels')}
           </button>
         </div>
 
         {selectedModel === 'audi' ? (
           <div className="flex flex-col lg:flex-row lg:gap-6 lg:px-4 items-start">
             {/* Preview — full-width on mobile, naturally, no negative-margin tricks */}
-            <div className="w-full lg:w-[70%] flex flex-col">
+            <div className="w-full lg:w-[54%] flex flex-col">
+              <p className="lg:hidden px-4 text-xs text-gray-400 text-center mb-2">{t('configurator', 'tapHint')}</p>
               <div className="lg:rounded-xl overflow-hidden shadow-md bg-gray-100 relative select-none">
                 <WheelPreview onZoneClick={handleZoneClick} />
-                <p className="lg:hidden text-center text-xs text-gray-400 font-medium py-2 bg-gray-50 border-t border-gray-100">
-                  {lang === 'bs' ? 'Tapnite dio volana za odabir materijala' : 'Tap a section of the wheel to choose material'}
-                </p>
               </div>
-              <p className="hidden lg:block text-xs text-gray-400 font-medium mt-2 text-center">
-                {lang === 'bs' ? 'Kliknite na dio volana za odabir materijala' : 'Click a section of the wheel to choose material'}
-              </p>
-              <div className="hidden lg:block px-4 lg:px-0">
-                <StitchingPreviewCard />
-              </div>
+              <img
+                src={`/wheels/audi/thread/thread_${state.threadColour}.png`}
+                alt="Stitching thread"
+                className="w-full h-auto object-contain lg:cursor-default cursor-pointer rounded-b-xl"
+                style={{ transition: 'opacity 0.35s ease' }}
+                onClick={() => setActiveZone({ zone: 'thread' })}
+              />
             </div>
 
             {/* Sidebar options panel */}
-            <div className="px-4 lg:px-0 w-full lg:w-[30%] lg:border-l border-gray-200 shrink-0">
+            <div className="px-4 lg:px-0 w-full lg:w-[46%] lg:border-l border-gray-200 shrink-0">
               <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} />
             </div>
           </div>
