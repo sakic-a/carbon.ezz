@@ -25,7 +25,7 @@ import {
   Star,
 } from "lucide-react";
 
-const API = "http://localhost:5001/api";
+const API = "/api";
 
 export default function UserDashboard() {
   const { user, logout, getToken } = useAuth();

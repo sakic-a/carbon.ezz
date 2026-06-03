@@ -11,7 +11,7 @@ export function ShopProvider({ children }) {
     if (storedCart) {
       setCart(JSON.parse(storedCart));
     }
-    fetch("http://localhost:5001/api/products")
+    fetch("/api/products")
       .then((res) => res.json())
       .then((data) => setProductsList(data))
       .catch((err) => console.error("Failed to load products", err));
@@ -38,7 +38,7 @@ export function ShopProvider({ children }) {
   const clearCart = () => setCart([]);
   const addProduct = async (product) => {
     try {
-      const response = await fetch("http://localhost:5001/api/products", {
+      const response = await fetch("/api/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json" ,
@@ -55,7 +55,7 @@ export function ShopProvider({ children }) {
   };
   const updateProduct = async (id, productData) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/products/${id}`, {
+      const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json" ,
@@ -72,7 +72,7 @@ export function ShopProvider({ children }) {
   };
   const deleteProduct = async (id) => {
     try {
-      await fetch(`http://localhost:5001/api/products/${id}`, {
+      await fetch(`/api/products/${id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${getToken()}`,
@@ -85,7 +85,7 @@ export function ShopProvider({ children }) {
   };
   const placeOrder = async (user, shippingDetails) => {
     try {
-      const response = await fetch("http://localhost:5001/api/orders", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
         body: JSON.stringify({
@@ -104,7 +104,7 @@ export function ShopProvider({ children }) {
   };
   const sendMessage = async (contactData) => {
     try {
-      await fetch("http://localhost:5001/api/contact", {
+      await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contactData),
@@ -117,7 +117,7 @@ export function ShopProvider({ children }) {
   };
   const submitInquiry = async (inquiryData) => {
     try {
-      const response = await fetch("http://localhost:5001/api/configurator-inquiries", {
+      const response = await fetch("/api/configurator-inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(inquiryData),

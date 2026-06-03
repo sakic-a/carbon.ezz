@@ -98,7 +98,7 @@ export default function Admin() {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            const res = await fetch("http://localhost:5001/api/upload", {
+            const res = await fetch("/api/upload", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${getToken()}` },
                 body: formData,
@@ -129,7 +129,7 @@ export default function Admin() {
         const formData = new FormData();
         files.forEach((file) => formData.append("gallery", file));
         try {
-            const res = await fetch("http://localhost:5001/api/upload-gallery", {
+            const res = await fetch("/api/upload-gallery", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${getToken()}` },
                 body: formData,
@@ -152,7 +152,7 @@ export default function Admin() {
             navigate('/login');
             return;
         }
-        fetch('http://localhost:5001/api/admin/orders', {
+        fetch('/api/admin/orders', {
             headers: {
                 "Authorization": `Bearer ${getToken()}`,
             }
@@ -162,7 +162,7 @@ export default function Admin() {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch('http://localhost:5001/api/admin/messages', {
+        fetch('/api/admin/messages', {
             headers: {
                  "Authorization": `Bearer ${getToken()}`,
             }
@@ -172,7 +172,7 @@ export default function Admin() {
                 if (Array.isArray(data)) setMessages(data);
             })
             .catch(err => console.error("Failed to load messages", err));
-        fetch('http://localhost:5001/api/admin/configurator-inquiries', {
+        fetch('/api/admin/configurator-inquiries', {
             headers: {
                  "Authorization": `Bearer ${getToken()}`,
             }
@@ -185,7 +185,7 @@ export default function Admin() {
     }, [navigate, user]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
-            await fetch(`http://localhost:5001/api/orders/${orderId}/status`, {
+            await fetch(`/api/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -228,7 +228,7 @@ export default function Admin() {
 
     const handleSaveReorder = async () => {
         try {
-            const res = await fetch('http://localhost:5001/api/products/reorder', {
+            const res = await fetch('/api/products/reorder', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -279,7 +279,7 @@ export default function Admin() {
     };
     const handleReply = async (msgId, replyText) => {
         try {
-            const res = await fetch(`http://localhost:5001/api/messages/${msgId}/reply`, {
+            const res = await fetch(`/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json' ,
@@ -298,7 +298,7 @@ export default function Admin() {
     const handleDeleteInquiry = async (inquiryId) => {
         if (!window.confirm(t('faq', 'confirmDelete') || "Are you sure you want to delete this inquiry?")) return;
         try {
-            const res = await fetch(`http://localhost:5001/api/admin/configurator-inquiries/${inquiryId}`, {
+            const res = await fetch(`/api/admin/configurator-inquiries/${inquiryId}`, {
                 method: 'DELETE',
                 headers: { 
                     'Authorization': `Bearer ${getToken()}`, 
@@ -314,7 +314,7 @@ export default function Admin() {
     };
     const handleInquiryReply = async (inqId, replyText) => {
         try {
-            const res = await fetch(`http://localhost:5001/api/admin/configurator-inquiries/${inqId}/reply`, {
+            const res = await fetch(`/api/admin/configurator-inquiries/${inqId}/reply`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json' ,

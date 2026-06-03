@@ -15,7 +15,7 @@ export default function ProductDetails() {
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState("");
   useEffect(() => {
-    fetch(`http://localhost:5001/api/products/${id}`)
+    fetch(`/api/products/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Product not found");
         return res.json();

@@ -61,11 +61,11 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5001/api/auth/google";
+    window.location.href = "/api/auth/google";
   };
 
   const handleFacebookLogin = () => {
-    window.location.href = "http://localhost:5001/api/auth/facebook";
+    window.location.href = "/api/auth/facebook";
   };
 
   const labels = {
