@@ -360,7 +360,7 @@ export default function Admin() {
                             <MessageSquare size={20} /> {t('admin', 'messages')}
                         </button>
                     </div>
-                    <div className="bg-white p-8 rounded-lg shadow-sm">
+                    <div className="bg-white p-8 rounded-lg shadow-sm min-w-0 overflow-hidden">
                         {activeTab === 'orders' && (
                             <div>
                                 <h2 className="text-xl font-bold mb-6">{t('admin', 'orders')}</h2>
@@ -667,7 +667,7 @@ export default function Admin() {
                                         {messages.map(msg => (
                                             <div key={msg.id} className="border border-gray-200 rounded p-4">
                                                 <div className="flex justify-between mb-2">
-                                                    <strong className="text-primary">{msg.name}</strong>
+                                                    <strong className="text-primary break-words min-w-0">{msg.name}</strong>
                                                     <span className="text-sm text-gray-400">{msg.created_at ? new Date(msg.created_at).toLocaleDateString("en-GB") : "—"}</span>
                                                 </div>
                                                 <div className="text-sm text-gray-500 mb-3">
@@ -729,9 +729,9 @@ export default function Admin() {
                                                 </button>
 
                                                 <div className="flex flex-col md:flex-row justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
-                                                    <div>
-                                                        <h3 className="font-extrabold text-lg text-black">{inq.name}</h3>
-                                                        <p className="text-sm text-gray-500">{inq.email} {inq.phone && <span className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{inq.phone}</span>}</p>
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-extrabold text-lg text-black break-words">{inq.name}</h3>
+                                                        <p className="text-sm text-gray-500 break-words">{inq.email} {inq.phone && <span className="ml-2 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{inq.phone}</span>}</p>
                                                     </div>
                                                     <div className="text-right md:text-right text-sm text-gray-400 font-semibold self-start md:self-center">
                                                         {new Date(inq.created_at).toLocaleString()}
@@ -780,14 +780,14 @@ export default function Admin() {
                                                 {inq.notes && (
                                                     <div className="bg-yellow-50/50 rounded-xl p-4 border border-yellow-100 text-sm">
                                                         <h4 className="font-bold text-yellow-800 mb-1 uppercase tracking-wider text-xs">Customer Notes:</h4>
-                                                        <p className="text-gray-700 italic">"{inq.notes}"</p>
+                                                        <p className="text-gray-700 italic break-words">"{inq.notes}"</p>
                                                     </div>
                                                 )}
 
                                                 {inq.reply ? (
                                                     <div className="bg-green-50 p-4 rounded-xl border border-green-100 mt-4">
                                                         <strong className="text-green-800 text-xs block mb-1">Reply:</strong>
-                                                        <p className="text-green-900">{inq.reply}</p>
+                                                        <p className="text-green-900 whitespace-pre-wrap break-words">{inq.reply}</p>
                                                     </div>
                                                 ) : (
                                                     <div className="flex gap-2 mt-4">

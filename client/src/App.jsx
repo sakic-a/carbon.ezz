@@ -1,5 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import { LanguageProvider } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ShopProvider } from "./context/ShopContext";
@@ -36,6 +42,7 @@ function App() {
         <AuthProvider>
           <ShopProvider>
             <div className="min-h-screen flex flex-col font-sans text-slate-800">
+              <ScrollToTop />
               <Navbar />
               <main className="flex-grow">
                 <Routes>
