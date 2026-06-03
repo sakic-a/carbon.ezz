@@ -472,7 +472,7 @@ export default function UserDashboard() {
                         ))}
                       </div>
                       {order.shipping_address && (
-                        <div className="mt-4 text-xs text-gray-500">
+                        <div className="mt-4 text-xs text-gray-500 break-words">
                           <span className="font-semibold text-gray-700">
                             {lang === "bs" ? "Dostava: " : "Shipping: "}
                           </span>
@@ -584,7 +584,7 @@ export default function UserDashboard() {
                   {messages.map((msg) => (
                     <div key={msg.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm text-black font-medium leading-snug whitespace-pre-wrap break-words">{msg.message}</p>
+                        <p className="text-sm text-black font-medium leading-snug whitespace-pre-wrap break-words min-w-0">{msg.message}</p>
                         <span className="text-xs text-gray-400 whitespace-nowrap">
                           {formatDate(msg.created_at)}
                         </span>
