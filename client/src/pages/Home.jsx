@@ -21,7 +21,7 @@ const carbonBg = {
 };
 
 export default function Home() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { products } = useShop();
   const featured = products.slice(0, 3);
 

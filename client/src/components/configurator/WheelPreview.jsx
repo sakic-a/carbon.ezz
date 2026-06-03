@@ -104,7 +104,7 @@ const OUTLINES = [
 
 export default function WheelPreview({ onZoneClick }) {
   const { state } = useConfigurator();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { topMaterial, sideMaterial, bottomMaterial, ringEnabled, ringColour, wheelShape, selectedModel } = state;
   const [hoveredZoneId, setHoveredZoneId] = useState(null);
 
@@ -125,7 +125,7 @@ export default function WheelPreview({ onZoneClick }) {
         className="flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-inner"
       >
         <span className="text-gray-400 font-bold uppercase tracking-wider text-sm">
-          {lang === 'bs' ? 'Uskoro' : 'Coming Soon'}
+          {t('configurator', 'comingSoon')}
         </span>
       </div>
     );
