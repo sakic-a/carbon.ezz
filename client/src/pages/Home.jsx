@@ -99,7 +99,7 @@ export default function Home() {
             {[
               { n: "100%", l: lang === "bs" ? "OEM Fitment" : "OEM Fitment" },
               { n: "5★",   l: lang === "bs" ? "Ocjena" : "Rating" },
-              { n: "3+",   l: lang === "bs" ? "Godine" : "Years" },
+              { n: "5+",   l: lang === "bs" ? "Godine" : "Years" },
             ].map(({ n, l }) => (
               <div key={l} className="hp-stat">
                 <span className="hp-stat__n">{n}</span>
