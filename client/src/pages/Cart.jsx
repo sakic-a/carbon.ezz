@@ -7,7 +7,7 @@ import { useState } from "react";
 import { getImageUrl } from "../utils/imageUrl";
 
 export default function Cart() {
-  const { cart, removeFromCart, placeOrder } = useShop();
+  const { cart, removeFromCart, placeOrder, products } = useShop();
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,7 +21,17 @@ export default function Cart() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
 
+  const isItemOutOfStock = (itemId) => {
+    const foundProduct = products.find((p) => p.id === itemId);
+    return foundProduct ? foundProduct.is_in_stock === false : false;
+  };
+  const hasOutOfStockItems = cart.some((item) => isItemOutOfStock(item.id));
+
   const handleCheckout = () => {
+    if (hasOutOfStockItems) {
+      alert(t("cart", "outOfStockWarning"));
+      return;
+    }
     if (!user) {
       navigate("/login?redirect=/cart");
       return;
@@ -77,6 +87,12 @@ export default function Cart() {
         <h1 className="text-3xl font-bold mb-8 text-black">
           {t("cart", "title")}
         </h1>
+        {hasOutOfStockItems && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            <span>{t("cart", "outOfStockWarning")}</span>
+          </div>
+        )}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           {cart.map((item) => (
             <div
@@ -91,7 +107,14 @@ export default function Cart() {
                 />
               </div>
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="text-lg font-semibold mb-1">{item.name}</h3>
+                <h3 className="text-lg font-semibold mb-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  {item.name}
+                  {isItemOutOfStock(item.id) && (
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded font-semibold uppercase">
+                      {t("cart", "outOfStockBadge")}
+                    </span>
+                  )}
+                </h3>
                 <p className="text-gray-600">
                   €{Number(item.price).toFixed(2)} x {item.quantity}
                 </p>
@@ -115,7 +138,12 @@ export default function Cart() {
           </div>
           <button
             onClick={handleCheckout}
-            className="w-full bg-primary text-black py-4 rounded text-lg font-bold hover:bg-yellow-400 transition-colors"
+            disabled={hasOutOfStockItems}
+            className={`w-full py-4 rounded text-lg font-bold transition-colors ${
+              hasOutOfStockItems
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-primary text-black hover:bg-yellow-400"
+            }`}
           >
             {t("cart", "checkout")}
           </button>

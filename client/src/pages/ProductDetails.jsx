@@ -87,10 +87,15 @@ export default function ProductDetails() {
             )}
           </div>
           <div>
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-2">
               <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
                 {product.category}
               </span>
+              {product.is_in_stock === false && (
+                <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
+                  {t("shop", "outOfStock")}
+                </span>
+              )}
             </div>
             <h1 className="text-4xl font-extrabold mb-4 text-black">{name}</h1>
             <p className="text-3xl font-bold text-primary mb-6">
@@ -106,14 +111,23 @@ export default function ProductDetails() {
             {!isAdmin && (
               <button
                 onClick={handleAdd}
+                disabled={product.is_in_stock === false}
                 className={`w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-colors ${
-                  added
+                  product.is_in_stock === false
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : added
                     ? "bg-green-500 text-white"
                     : "bg-primary text-black hover:bg-yellow-400"
                 }`}
               >
-                {added ? <Check size={24} /> : <Plus size={24} />}
-                <span>{added ? "Added to Cart" : t("shop", "addToCart")}</span>
+                {product.is_in_stock === false ? (
+                  <span>{t("shop", "outOfStock")}</span>
+                ) : (
+                  <>
+                    {added ? <Check size={24} /> : <Plus size={24} />}
+                    <span>{added ? "Added to Cart" : t("shop", "addToCart")}</span>
+                  </>
+                )}
               </button>
             )}
             <div className="grid grid-cols-3 gap-4 mt-10 text-center">

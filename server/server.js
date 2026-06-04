@@ -29,6 +29,8 @@ const COOKIE_OPTIONS = {
 
 db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER")
   ?.catch?.(err => console.error("Migration error:", err.message));
+db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_in_stock BOOLEAN DEFAULT TRUE")
+  ?.catch?.(err => console.error("Migration error:", err.message));
 
 const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 app.use(cors({ origin: allowedOrigin, credentials: true }));
@@ -330,6 +332,9 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
         return res.status(400).json({ success: false, error: `Product not found: ${item.id}` });
       }
       const product = productRes.rows[0];
+      if (product.is_in_stock === false) {
+        return res.status(400).json({ success: false, error: `Product "${product.name}" is out of stock.` });
+      }
       serverTotal += parseFloat(product.price) * quantity;
       resolvedItems.push({ name: product.name, price: product.price, quantity, image: product.image });
     }
@@ -430,12 +435,12 @@ app.patch("/api/orders/:id/status", authenticateToken, requireAdmin, async (req,
 
 // ── Products CRUD ─────────────────────────────────────────────────────────────
 app.post("/api/products", authenticateToken, requireAdmin, async (req, res) => {
-  const { name, nameBs, price, category, image, description, gallery } = req.body;
+  const { name, nameBs, price, category, image, description, gallery, isInStock } = req.body;
   try {
     await db.query("BEGIN");
     const productRes = await db.query(
-      "INSERT INTO products (name, name_bs, price, category, image, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [name, nameBs, price, category, image, description]
+      "INSERT INTO products (name, name_bs, price, category, image, description, is_in_stock) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      [name, nameBs, price, category, image, description, isInStock !== false]
     );
     const newProduct = productRes.rows[0];
     if (gallery && gallery.length > 0) {
@@ -466,12 +471,12 @@ app.delete("/api/products/:id", authenticateToken, requireAdmin, async (req, res
 
 app.put("/api/products/:id", authenticateToken, requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, nameBs, price, category, image, description, gallery } = req.body;
+  const { name, nameBs, price, category, image, description, gallery, isInStock } = req.body;
   try {
     await db.query("BEGIN");
     const productRes = await db.query(
-      "UPDATE products SET name = $1, name_bs = $2, price = $3, category = $4, image = $5, description = $6 WHERE id = $7 RETURNING *",
-      [name, nameBs, price, category, image, description, id]
+      "UPDATE products SET name = $1, name_bs = $2, price = $3, category = $4, image = $5, description = $6, is_in_stock = $7 WHERE id = $8 RETURNING *",
+      [name, nameBs, price, category, image, description, isInStock !== false, id]
     );
     if (productRes.rows.length === 0) { await db.query("ROLLBACK"); return res.status(404).json({ success: false, error: "Product not found" }); }
     const updatedProduct = productRes.rows[0];
