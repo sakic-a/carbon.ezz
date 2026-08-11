@@ -20,6 +20,7 @@ export default function GoogleCallback() {
     } else {
       navigate("/login", { replace: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

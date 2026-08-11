@@ -64,6 +64,7 @@ export default function Login() {
     window.location.href = "/api/auth/google";
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleFacebookLogin = () => {
     window.location.href = "/api/auth/facebook";
   };

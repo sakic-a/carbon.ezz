@@ -12,19 +12,16 @@ import {
   Package,
   CheckCircle,
   Clock,
-  Truck,
   AlertCircle,
   Send,
-  Eye,
-  EyeOff,
-  Trash2,
   X,
   User,
   Search,
-  TrendingUp,
-  Star,
   Sliders,
   LogOut,
+  Trash2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const API = "/api";
@@ -35,6 +32,63 @@ export default function UserDashboard() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const dashTrans = {
+    en: {
+      title: "My Account", orders: "My Orders", inquiries: "Messages",
+      configInquiries: "Design Inquiries", noConfigInquiries: "You have no custom design inquiries yet.",
+      cart: "Cart", password: "Change Password", noOrders: "You have no orders yet.",
+      orderDate: "Date", orderTotal: "Total", orderStatus: "Status", orderItems: "Items",
+      viewDetails: "View Details", hide: "Hide",
+      statusPending: "Pending", statusApproved: "Approved", statusDeclined: "Declined",
+      sendMessage: "Send a Message", yourMessages: "Your Messages",
+      noMessages: "You haven't sent any messages yet.",
+      adminReply: "Reply from Carbon.ez:", noReply: "Awaiting reply...",
+      name: "Full Name", email: "Email", phone: "Phone Number", message: "Message",
+      send: "Send", messageSent: "Message sent successfully!",
+      cartEmpty: "Your cart is empty.", cartTotal: "Total",
+      goToCart: "Go to Checkout", remove: "Remove",
+      currentPw: "Current Password", newPw: "New Password",
+      confirmPw: "Confirm New Password", changePw: "Update Password",
+      pwSuccess: "Password changed successfully!",
+      pwError: "Failed to change password. Check your current password.",
+      pwMismatch: "New passwords do not match.", pwTooShort: "Password must be 8+ characters with uppercase, lowercase, number and special character (!@#$%^&*).",
+      logout: "Logout", hello: "Hello",
+      orderSuccessBanner: "Your order was placed successfully!",
+      filterAll: "All", filterPending: "Pending", filterApproved: "Approved", filterDeclined: "Declined",
+      searchOrders: "Search orders...", 
+      memberSince: "Member since",
+      refresh: "Refresh Orders",
+    },
+    bs: {
+      title: "Moj Profil", orders: "Moje Narudžbe", inquiries: "Poruke",
+      configInquiries: "Upiti za dizajn", noConfigInquiries: "Nemate upita za dizajn.",
+      cart: "Korpa", password: "Promjena Šifre", noOrders: "Nemate narudžbi.",
+      orderDate: "Datum", orderTotal: "Ukupno", orderStatus: "Status", orderItems: "Artikli",
+      viewDetails: "Detalji", hide: "Sakrij",
+      statusPending: "Na čekanju", statusApproved: "Odobreno", statusDeclined: "Odbijeno",
+      sendMessage: "Pošalji Poruku", yourMessages: "Vaše Poruke",
+      noMessages: "Niste poslali nijedan upit.",
+      adminReply: "Odgovor Carbon.ez:", noReply: "Čeka se odgovor...",
+      name: "Ime i Prezime", email: "Email", phone: "Broj telefona", message: "Poruka",
+      send: "Pošalji", messageSent: "Poruka uspješno poslana!",
+      cartEmpty: "Vaša korpa je prazna.", cartTotal: "Ukupno",
+      goToCart: "Idi na Plaćanje", remove: "Ukloni",
+      currentPw: "Trenutna Šifra", newPw: "Nova Šifra",
+      confirmPw: "Potvrdi Novu Šifru", changePw: "Promijeni Šifru",
+      pwSuccess: "Šifra uspješno promijenjena!",
+      pwError: "Greška. Provjerite trenutnu šifru.",
+      pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati 8+ znakova, veliko slovo, broj i poseban znak (!@#$%^&*).",
+      logout: "Odjava", hello: "Zdravo",
+      orderSuccessBanner: "Vaša narudžba je uspješno primljena!",
+      filterAll: "Sve", filterPending: "Na čekanju", filterApproved: "Odobreno", filterDeclined: "Odbijeno",
+      searchOrders: "Pretraži narudžbe...", 
+       memberSince: "Član od",
+      refresh: "Osvježi narudžbe",
+    },
+  };
+
+  const td = (key) => dashTrans[lang]?.[key] ?? dashTrans.en[key];
 
   const urlTab = searchParams.get("tab");
   const orderSuccess = searchParams.get("success") === "1";
@@ -93,6 +147,7 @@ export default function UserDashboard() {
         let storedStatuses = {};
         try {
           storedStatuses = JSON.parse(localStorage.getItem(storedKey)) || {};
+        // eslint-disable-next-line no-empty, no-unused-vars
         } catch (e) {}
 
         let newCount = 0;
@@ -120,6 +175,7 @@ export default function UserDashboard() {
 
   useEffect(() => {
     fetchOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -142,6 +198,7 @@ export default function UserDashboard() {
         let storedReplies = {};
         try {
           storedReplies = JSON.parse(localStorage.getItem(storedKey)) || {};
+        // eslint-disable-next-line no-empty, no-unused-vars
         } catch (e) {}
 
         let newCount = 0;
@@ -168,6 +225,7 @@ export default function UserDashboard() {
         }
       })
       .catch(() => setMessagesLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchConfigInquiries = () => {
@@ -190,6 +248,7 @@ export default function UserDashboard() {
         let storedReplies = {};
         try {
           storedReplies = JSON.parse(localStorage.getItem(storedKey)) || {};
+        // eslint-disable-next-line no-empty, no-unused-vars
         } catch (e) {}
 
         let newCount = 0;
@@ -220,6 +279,7 @@ export default function UserDashboard() {
 
   useEffect(() => {
     fetchConfigInquiries();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Sync notification badges when activeTab changes
@@ -263,6 +323,7 @@ export default function UserDashboard() {
     if (didChange) {
       window.dispatchEvent(new Event("dashboard-updates-read"));
     }
+   
   }, [activeTab, orders, messages, configInquiries, user]);
 
   useEffect(() => {
@@ -361,70 +422,11 @@ export default function UserDashboard() {
       } else {
         setPwError(data.error || td("pwError"));
       }
-    } catch (err) {
+    } catch {
       setPwError(td("pwError"));
     }
     setPwLoading(false);
   };
-
-  
-  const dashTrans = {
-    en: {
-      title: "My Account", orders: "My Orders", inquiries: "Messages",
-      configInquiries: "Design Inquiries", noConfigInquiries: "You have no custom design inquiries yet.",
-      cart: "Cart", password: "Change Password", noOrders: "You have no orders yet.",
-      orderDate: "Date", orderTotal: "Total", orderStatus: "Status", orderItems: "Items",
-      viewDetails: "View Details", hide: "Hide",
-      statusPending: "Pending", statusApproved: "Approved", statusDeclined: "Declined",
-      sendMessage: "Send a Message", yourMessages: "Your Messages",
-      noMessages: "You haven't sent any messages yet.",
-      adminReply: "Reply from Carbon.ez:", noReply: "Awaiting reply...",
-      name: "Full Name", email: "Email", phone: "Phone Number", message: "Message",
-      send: "Send", messageSent: "Message sent successfully!",
-      cartEmpty: "Your cart is empty.", cartTotal: "Total",
-      goToCart: "Go to Checkout", remove: "Remove",
-      currentPw: "Current Password", newPw: "New Password",
-      confirmPw: "Confirm New Password", changePw: "Update Password",
-      pwSuccess: "Password changed successfully!",
-      pwError: "Failed to change password. Check your current password.",
-      pwMismatch: "New passwords do not match.", pwTooShort: "Password must be 8+ characters with uppercase, lowercase, number and special character (!@#$%^&*).",
-      logout: "Logout", hello: "Hello",
-      orderSuccessBanner: "Your order was placed successfully!",
-      filterAll: "All", filterPending: "Pending", filterApproved: "Approved", filterDeclined: "Declined",
-      searchOrders: "Search orders...", 
-      memberSince: "Member since",
-      refresh: "Refresh Orders",
-    },
-    bs: {
-      title: "Moj Profil", orders: "Moje Narudžbe", inquiries: "Poruke",
-      configInquiries: "Upiti za dizajn", noConfigInquiries: "Nemate upita za dizajn.",
-      cart: "Korpa", password: "Promjena Šifre", noOrders: "Nemate narudžbi.",
-      orderDate: "Datum", orderTotal: "Ukupno", orderStatus: "Status", orderItems: "Artikli",
-      viewDetails: "Detalji", hide: "Sakrij",
-      statusPending: "Na čekanju", statusApproved: "Odobreno", statusDeclined: "Odbijeno",
-      sendMessage: "Pošalji Poruku", yourMessages: "Vaše Poruke",
-      noMessages: "Niste poslali nijedan upit.",
-      adminReply: "Odgovor Carbon.ez:", noReply: "Čeka se odgovor...",
-      name: "Ime i Prezime", email: "Email", phone: "Broj telefona", message: "Poruka",
-      send: "Pošalji", messageSent: "Poruka uspješno poslana!",
-      cartEmpty: "Vaša korpa je prazna.", cartTotal: "Ukupno",
-      goToCart: "Idi na Plaćanje", remove: "Ukloni",
-      currentPw: "Trenutna Šifra", newPw: "Nova Šifra",
-      confirmPw: "Potvrdi Novu Šifru", changePw: "Promijeni Šifru",
-      pwSuccess: "Šifra uspješno promijenjena!",
-      pwError: "Greška. Provjerite trenutnu šifru.",
-      pwMismatch: "Nove šifre se ne podudaraju.", pwTooShort: "Šifra mora imati 8+ znakova, veliko slovo, broj i poseban znak (!@#$%^&*).",
-      logout: "Odjava", hello: "Zdravo",
-      orderSuccessBanner: "Vaša narudžba je uspješno primljena!",
-      filterAll: "Sve", filterPending: "Na čekanju", filterApproved: "Odobreno", filterDeclined: "Odbijeno",
-      searchOrders: "Pretraži narudžbe...", 
-       memberSince: "Član od",
-      refresh: "Osvježi narudžbe",
-    },
-  };
-
-  const td = (key) => dashTrans[lang]?.[key] ?? dashTrans.en[key];
-
 
   const formatDate = (value) => {
     if (!value) return "—";
@@ -1017,7 +1019,7 @@ export default function UserDashboard() {
                       <h4 className="font-bold text-yellow-800 mb-1 uppercase tracking-wider text-xs">
                         {lang === "bs" ? "Napomena:" : "Notes:"}
                       </h4>
-                      <p className="text-gray-700 italic break-words">"{inq.notes}"</p>
+                      <p className="text-gray-700 italic break-words">&quot;{inq.notes}&quot;</p>
                     </div>
                   )}
 

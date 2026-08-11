@@ -38,6 +38,7 @@ export default function Navbar() {
         let storedStatuses = {};
         try {
           storedStatuses = JSON.parse(localStorage.getItem(ordersKey)) || {};
+        // eslint-disable-next-line no-empty, no-unused-vars
         } catch (e) {}
         const isFirstOrdersLoad = Object.keys(storedStatuses).length === 0;
         if (!isFirstOrdersLoad) {
@@ -54,6 +55,7 @@ export default function Navbar() {
         let storedMsgReplies = {};
         try {
           storedMsgReplies = JSON.parse(localStorage.getItem(msgKey)) || {};
+        // eslint-disable-next-line no-empty, no-unused-vars
         } catch (e) {}
         messagesRes.forEach((m) => {
           if (m.reply) {
@@ -69,6 +71,7 @@ export default function Navbar() {
         let storedConfigReplies = {};
         try {
           storedConfigReplies = JSON.parse(localStorage.getItem(configKey)) || {};
+        // eslint-disable-next-line no-empty, no-unused-vars
         } catch (e) {}
         configRes.forEach((inq) => {
           if (inq.reply) {
