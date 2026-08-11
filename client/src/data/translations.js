@@ -123,6 +123,7 @@ export const translations = {
     gallery: {
       subtitle: "A glimpse into our premium collection and happy customers.",
       loading: "Loading...",
+      loadMore: "Load more",
     },
     home: {
       configureYours: "Configure Yours",
@@ -305,6 +306,7 @@ export const translations = {
     gallery: {
       subtitle: "Pogled na našu premium kolekciju i zadovoljne kupce.",
       loading: "Učitavanje...",
+      loadMore: "Učitaj više",
     },
     home: {
       configureYours: "Dizajnirajte svoj",
