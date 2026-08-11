@@ -142,6 +142,7 @@ export function ShopProvider({ children }) {
     </ShopContext.Provider>
   );
 }
+// eslint-disable-next-line react-refresh/only-export-components
 export function useShop() {
   return useContext(ShopContext);
 }

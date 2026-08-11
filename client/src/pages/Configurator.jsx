@@ -8,7 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 
 
 function PriceInquiryModal({ isOpen, onClose }) {

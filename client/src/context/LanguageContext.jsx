@@ -15,6 +15,7 @@ export function LanguageProvider({ children }) {
     </LanguageContext.Provider>
   );
 }
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLanguage() {
   return useContext(LanguageContext);
 }

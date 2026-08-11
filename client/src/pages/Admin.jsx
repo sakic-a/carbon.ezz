@@ -796,7 +796,7 @@ export default function Admin() {
                                                 {inq.notes && (
                                                     <div className="bg-yellow-50/50 rounded-xl p-4 border border-yellow-100 text-sm">
                                                         <h4 className="font-bold text-yellow-800 mb-1 uppercase tracking-wider text-xs">Customer Notes:</h4>
-                                                        <p className="text-gray-700 italic break-words">"{inq.notes}"</p>
+                                                        <p className="text-gray-700 italic break-words">&quot;{inq.notes}&quot;</p>
                                                     </div>
                                                 )}
 

@@ -1,0 +1,6 @@
+chore(client): resolve all ESLint warnings and errors across client
+
+- **ESLint Config**: Integrated `eslint-plugin-react` to resolve massive false-positive "unused variable" warnings for JSX components. Added globals for Vitest (`describe`, `it`, etc.) to eliminate undefined warnings in test files.
+- **UserDashboard**: Refactored component structure by hoisting the `td` function to avoid scope issues. Added ignore directives for intentionally empty `localStorage` try-catch blocks and fixed `useEffect` missing dependencies.
+- **Context Providers**: Suppressed `react-refresh/only-export-components` warnings on custom hooks (e.g., `useAuth`) exported alongside Provider components.
+- **General Cleanup**: Removed entirely unused variables, cleaned up `lucide-react` imports, and escaped unescaped JSX quotes in `Admin.jsx` and `UserDashboard.jsx`.

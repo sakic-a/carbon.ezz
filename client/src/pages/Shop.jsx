@@ -1,6 +1,6 @@
 import { useLanguage } from "../context/LanguageContext";
 import { useShop } from "../context/ShopContext";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import ProductCard from "../components/ProductCard";
 import { CATEGORIES } from "../data/categories";
 

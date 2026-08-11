@@ -1,7 +1,7 @@
 import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import { Trash2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Trash2, Loader2, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { getImageUrl } from "../utils/imageUrl";
@@ -52,7 +52,7 @@ export default function Cart() {
       } else {
         setOrderError("Order failed. Please try again.");
       }
-    } catch (err) {
+    } catch {
       setOrderError("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
