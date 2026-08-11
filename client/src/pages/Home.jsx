@@ -98,7 +98,6 @@ export default function Home() {
           <div className="hp-cta__stats">
             {[
               { n: "100%", l: lang === "bs" ? "OEM Fitment" : "OEM Fitment" },
-              { n: "5★",   l: lang === "bs" ? "Ocjena" : "Rating" },
               { n: "5+",   l: lang === "bs" ? "Godine" : "Years" },
             ].map(({ n, l }) => (
               <div key={l} className="hp-stat">
@@ -159,7 +158,7 @@ export default function Home() {
           margin-bottom: 28px;
         }
         .hp-hero__h1 {
-          font-size: clamp(3rem, 6vw, 5.5rem);
+          font-size: clamp(48px, 6vw, 88px);
           font-weight: 900;
           letter-spacing: -0.04em;
           line-height: 1.0;
@@ -343,13 +342,13 @@ export default function Home() {
         }
         .hp-service__icon { color: #111; }
         .hp-service__title {
-          font-size: 1.2rem;
+          font-size: 1.4rem;
           font-weight: 800;
           color: #111;
           margin-bottom: 10px;
         }
         .hp-service__desc {
-          font-size: 1rem;
+          font-size: 0.95rem;
           color: #6b7280;
           line-height: 1.7;
         }

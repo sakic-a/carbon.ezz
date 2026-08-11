@@ -12,6 +12,11 @@ export const translations = {
       cart: "Cart",
       myAccount: "My Account",
     },
+    footer: {
+      location: "Visoko, Bosnia and Herzegovina",
+      phone: "Phone:",
+      rights: "© 2026 Carbon.ez. All rights reserved.",
+    },
     hero: {
       title: "Redefine Your Drive",
       subtitle:
@@ -27,10 +32,10 @@ export const translations = {
     services: {
       title: "Why Choose Carbon.ez?",
       s1_title: "Precision Fitment",
-      s1_desc: "OEM core guarantee for perfect installation.",
+      s1_desc: "OEM core guarantee perfect and easy installation.",
       s2_title: "Premium Materials",
       s2_desc:
-        "Real Carbon Fiber, Italian Alcantara, Perforated Leather, and Top Grain Leather.",
+        "Carbon Fiber, Italian Alcantara, Perforated Leather, and Nappa Leather.",
       s3_title: "Custom Design",
       s3_desc: "Shape, stitching, and finish tailored to you.",
     },
@@ -195,6 +200,11 @@ export const translations = {
       cart: "Korpa",
       myAccount: "Moj račun",
     },
+    footer: {
+      location: "Visoko, Bosna i Hercegovina",
+      phone: "Telefon:",
+      rights: "© 2026 Carbon.ez. Sva prava zadržana.",
+    },
     hero: {
       title: "Redefinišite Svoju Vožnju",
       subtitle: "Ručno rađeni karbonski volani za vrhunsku kontrolu.",
@@ -209,12 +219,11 @@ export const translations = {
     services: {
       title: "Zašto Carbon.ez?",
       s1_title: "Savršeno Pristajanje",
-      s1_desc: "OEM baza garantuje laku instalaciju.",
+      s1_desc: "OEM baza garantuje lahku instalaciju.",
       s2_title: "Premium Materijali",
-      s2_desc:
-        "Pravi karbon, italijanska Alcantara, perforirana i top grain koža.",
+      s2_desc: "Karbonska vlakna, italijanska alcantara, perforirana i nappa koža.",
       s3_title: "Dizajn po Mjeri",
-      s3_desc: "Oblik, šavovi i završna obrada po vašoj želji.",
+      s3_desc: "Oblik, šavovi i završna obrada po Vašoj želji.",
     },
     shop: {
       title: "Naši Proizvodi",

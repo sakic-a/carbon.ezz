@@ -8,6 +8,9 @@
   --text-light: #9ca3af;
   --text-inverse: #ffffff;
 }
+html {
+  font-size: 18px; /* Bigger font for everything */
+}
 body {
   background-color: #ffffff;
   color: #000000;
