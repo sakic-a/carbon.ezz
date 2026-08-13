@@ -147,7 +147,7 @@ export default function Home() {
           padding: 100px 24px 80px;
           border-bottom: 1px solid #1a1a1a;
         }
-        .hp-hero__content { max-width: 680px; }
+        .hp-hero__content { max-width: 1000px; }
         .hp-hero__tag {
           display: inline-block;
           font-size: 0.7rem;
@@ -155,7 +155,7 @@ export default function Home() {
           letter-spacing: 0.2em;
           text-transform: uppercase;
           color: rgba(255,255,255,0.35);
-          margin-bottom: 28px;
+          margin-bottom: 40px;
         }
         .hp-hero__h1 {
           font-size: clamp(48px, 6vw, 88px);
@@ -163,13 +163,13 @@ export default function Home() {
           letter-spacing: -0.04em;
           line-height: 1.0;
           color: #fff;
-          margin-bottom: 24px;
+          margin-bottom: 36px;
         }
         .hp-hero__sub {
           font-size: 1.05rem;
           color: rgba(255,255,255,0.42);
           line-height: 1.8;
-          margin-bottom: 40px;
+          margin-bottom: 56px;
         }
         .hp-hero__btns {
           display: flex;

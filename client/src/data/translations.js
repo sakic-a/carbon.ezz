@@ -18,9 +18,9 @@ export const translations = {
       rights: "© 2026 Carbon.ez. All rights reserved.",
     },
     hero: {
-      title: "Redefine Your Drive",
+      title: "Drive With More Pleasure",
       subtitle:
-        "Custom handcrafted carbon fiber steering wheels for ultimate control.",
+        "Upgrade your car's interior with premium materials and precise craftsmanship, entirely tailored to your wishes.",
       cta: "Shop Now",
       configureYours: "Configure Yours",
     },
@@ -207,8 +207,8 @@ export const translations = {
       rights: "© 2026 Carbon.ez. Sva prava zadržana.",
     },
     hero: {
-      title: "Redefinišite Svoju Vožnju",
-      subtitle: "Ručno rađeni karbonski volani za vrhunsku kontrolu.",
+      title: "Vozite sa većim užitkom",
+      subtitle: "Unaprijedi unutrašnjost svog automobila uz vrhunske materijale i preciznu ručnu izradu, sve po tvojoj želji.",
       cta: "Kupite Odmah",
       configureYours: "Dizajnirajte svoj",
     },
