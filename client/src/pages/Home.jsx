@@ -24,6 +24,15 @@ export default function Home() {
   const { t, lang } = useLanguage();
   const { products } = useShop();
   const featured = products.slice(0, 3);
+  
+  const galleryImages = [
+    { src: "/images/bmw-wheel.png", alt: "BMW M-Performance Carbon" },
+    { src: "/images/mercedes-wheel.png", alt: "AMG Alcantara & Carbon" },
+    { src: "/images/forged-detail.png", alt: "Forged Carbon Detail" },
+    { src: "/images/racing-wheel.png", alt: "Custom Racing Wheel" },
+    { src: "/images/audi-wheel.png", alt: "Audi RS Flat Bottom" },
+    { src: "/images/tesla-yoke.png", alt: "Tesla Yoke Carbon" },
+  ];
 
   return (
     <>
@@ -128,6 +137,33 @@ export default function Home() {
               onClick={() => sessionStorage.removeItem("shopScrollY")}
             >
               {t("shop", "viewAll")} <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── GALLERY PREVIEW ─────────────────────────────────────── */}
+      <section className="hp-section hp-section--white">
+        <div className="container mx-auto px-6">
+          <div style={{ textAlign: "center", marginBottom: 52 }}>
+            <p className="hp-label">{lang === "bs" ? "Naši radovi" : "Our Work"}</p>
+            <h2 className="hp-section__title" style={{ marginBottom: 0 }}>{t("nav", "gallery")}</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {galleryImages.map((image, i) => (
+              <div key={i} className="rounded-lg overflow-hidden shadow-sm bg-gray-100 relative group aspect-square">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 40 }}>
+            <Link to="/gallery" className="hp-btn-outline" onClick={() => window.scrollTo(0, 0)}>
+              {lang === "bs" ? "Pogledaj cijelu galeriju" : "View Full Gallery"} <ArrowRight size={14} />
             </Link>
           </div>
         </div>
