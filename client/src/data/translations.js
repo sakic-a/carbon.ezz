@@ -120,6 +120,7 @@ export const translations = {
       phone: "Phone Number",
       send: "Send Message",
       success: "Message sent!",
+      error: "Something went wrong. Please try again.",
     },
     about: {
       p1: "Welcome to Carbon.ez, where precision meets performance. We believe the steering wheel is the ultimate connection between driver and machine. Born from a passion for motorsports, we curate a collection of custom carbon fiber steering wheels designed to transform your driving experience.",
@@ -306,6 +307,7 @@ export const translations = {
       phone: "Broj telefona",
       send: "Pošalji Poruku",
       success: "Poruka poslana!",
+      error: "Došlo je do greške. Pokušajte ponovo.",
     },
     about: {
       p1: "Dobrodošli u Carbon.ez, gdje preciznost susreće performanse. Vjerujemo da je volan krajnja veza između vozača i mašine. Rođeni iz strasti prema motosportu, nudimo kolekciju prilagođenih karbonskih volana dizajniranih da transformišu vaše iskustvo vožnje.",

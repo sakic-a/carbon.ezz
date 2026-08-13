@@ -3,7 +3,7 @@ import { useShop } from "../context/ShopContext";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 export default function About() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { sendMessage } = useShop();
   const [openFaq, setOpenFaq] = useState(null);
   const [cName, setCName] = useState("");
@@ -28,7 +28,7 @@ export default function About() {
       setCPhone("");
       setCMessage("");
     } else {
-      alert("Something went wrong. Please try again.");
+      alert(t("faq", "error") || "Something went wrong. Please try again.");
     }
   };
   const faqs = [
@@ -101,7 +101,6 @@ export default function About() {
                 placeholder={t("auth", "name")}
                 value={cName}
                 onChange={(e) => setCName(e.target.value)}
-                required
               />
               <input
                 type="email"
@@ -109,15 +108,20 @@ export default function About() {
                 placeholder={t("auth", "email")}
                 value={cEmail}
                 onChange={(e) => setCEmail(e.target.value)}
-                required
               />
               <input
                 type="tel"
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary md:col-span-2"
                 placeholder={t("faq", "phone")}
                 value={cPhone}
-                onChange={(e) => setCPhone(e.target.value)}
+                onChange={(e) => setCPhone(e.target.value.replace(/[^0-9+]/g, ""))}
                 required
+                onInvalid={(e) =>
+                  e.target.setCustomValidity(
+                    lang === "bs" ? "Molimo ispunite ovo polje." : "Please fill out this field."
+                  )
+                }
+                onInput={(e) => e.target.setCustomValidity("")}
               />
             </div>
             <textarea
@@ -127,6 +131,12 @@ export default function About() {
               value={cMessage}
               onChange={(e) => setCMessage(e.target.value)}
               required
+              onInvalid={(e) =>
+                e.target.setCustomValidity(
+                  lang === "bs" ? "Molimo ispunite ovo polje." : "Please fill out this field."
+                )
+              }
+              onInput={(e) => e.target.setCustomValidity("")}
             ></textarea>
             <button
               type="submit"
