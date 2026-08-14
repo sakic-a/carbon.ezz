@@ -47,7 +47,7 @@ export default function Home() {
               {t("home", "configureYours")} <ArrowRight size={15} />
             </Link>
             <Link to="/shop" className="hp-btn-ghost">
-              {t("hero", "cta")} <ChevronRight size={15} />
+              {t("hero", "cta")} <ArrowRight size={15} />
             </Link>
           </div>
         </div>
