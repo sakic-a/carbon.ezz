@@ -7,7 +7,7 @@ import { useConfigurator } from '../context/ConfiguratorContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, X } from 'lucide-react';
 
 
@@ -16,25 +16,38 @@ function PriceInquiryModal({ isOpen, onClose }) {
   const { user } = useAuth();
   const { submitInquiry } = useShop();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState("");
-  const [carModel, setCarModel] = useState("");
-  const [notes, setNotes] = useState("");
+  const [name, setName] = useState(() => sessionStorage.getItem('inquiry_name') || user?.name || "");
+  const [email, setEmail] = useState(() => sessionStorage.getItem('inquiry_email') || user?.email || "");
+  const [phone, setPhone] = useState(() => sessionStorage.getItem('inquiry_phone') || "");
+  const [carModel, setCarModel] = useState(() => sessionStorage.getItem('inquiry_car') || "");
+  const [notes, setNotes] = useState(() => sessionStorage.getItem('inquiry_notes') || "");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setName(user.name || "");
-      setEmail(user.email || "");
+      setName(prev => prev || user.name || "");
+      setEmail(prev => prev || user.email || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    sessionStorage.setItem('inquiry_name', name);
+    sessionStorage.setItem('inquiry_email', email);
+    sessionStorage.setItem('inquiry_phone', phone);
+    sessionStorage.setItem('inquiry_car', carModel);
+    sessionStorage.setItem('inquiry_notes', notes);
+  }, [name, email, phone, carModel, notes]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      navigate('/login?redirect=/configurator?inquiry=true');
+      return;
+    }
     setLoading(true);
 
     const inquiryData = {
@@ -56,6 +69,11 @@ function PriceInquiryModal({ isOpen, onClose }) {
     const success = await submitInquiry(inquiryData);
     setLoading(false);
     if (success) {
+      sessionStorage.removeItem('inquiry_name');
+      sessionStorage.removeItem('inquiry_email');
+      sessionStorage.removeItem('inquiry_phone');
+      sessionStorage.removeItem('inquiry_car');
+      sessionStorage.removeItem('inquiry_notes');
       alert(t("configurator", "inquirySuccess"));
       dispatch({ type: 'RESET' });
       onClose();
@@ -135,7 +153,6 @@ function PriceInquiryModal({ isOpen, onClose }) {
             <input
               type="email"
               className="w-full p-3 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -161,7 +178,10 @@ function PriceInquiryModal({ isOpen, onClose }) {
               className="w-full p-3 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm"
               required
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^\d\s\+\-\(\)]/g, '');
+                setPhone(val);
+              }}
               placeholder="+387 61 123 456"
             />
           </div>
@@ -197,8 +217,17 @@ function ConfiguratorContent() {
   const { selectedModel } = state;
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [activeZone, setActiveZone] = useState(null); // { zone, rect, anchor }
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('inquiry') === 'true') {
+      setInquiryOpen(true);
+      navigate('/configurator', { replace: true });
+    }
+  }, [location, navigate]);
 
   const handleZoneClick = (zone, rect, anchor) => {
     setActiveZone({ zone, rect, anchor });
@@ -211,10 +240,6 @@ function ConfiguratorContent() {
   ];
 
   const handleOpenInquiry = () => {
-    if (!user) {
-      navigate('/login?redirect=/configurator');
-      return;
-    }
     setInquiryOpen(true);
   };
 
