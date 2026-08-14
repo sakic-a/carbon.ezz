@@ -4,6 +4,20 @@ const ShopContext = createContext();
 export function ShopProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [productsList, setProductsList] = useState([]);
+  const [galleryImages, setGalleryImages] = useState([]);
+
+  const fetchGallery = async () => {
+    try {
+      const res = await fetch("/api/gallery");
+      const data = await res.json();
+      if (data.success) {
+        setGalleryImages(data.gallery);
+      }
+    } catch (err) {
+      console.error("Failed to fetch gallery images", err);
+    }
+  };
+
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
@@ -13,6 +27,7 @@ export function ShopProvider({ children }) {
       .then((res) => res.json())
       .then((data) => setProductsList(data))
       .catch((err) => console.error("Failed to load products", err));
+    fetchGallery();
   }, []);
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -122,6 +137,61 @@ export function ShopProvider({ children }) {
       return false;
     }
   };
+  const addGalleryImages = async (images) => {
+    try {
+      const res = await fetch("/api/gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchGallery();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const reorderGalleryImages = async (updates) => {
+    try {
+      const res = await fetch("/api/gallery/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchGallery();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const deleteGalleryImage = async (id) => {
+    try {
+      const res = await fetch(`/api/gallery/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchGallery();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
     <ShopContext.Provider
       value={{
@@ -136,6 +206,10 @@ export function ShopProvider({ children }) {
         deleteProduct,
         sendMessage,
         submitInquiry,
+        galleryImages,
+        addGalleryImages,
+        reorderGalleryImages,
+        deleteGalleryImage,
       }}
     >
       {children}

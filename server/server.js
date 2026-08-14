@@ -32,6 +32,15 @@ db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order INTEGER")
 db.query("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_in_stock BOOLEAN DEFAULT TRUE")
   ?.catch?.(err => console.error("Migration error:", err.message));
 
+db.query(`
+  CREATE TABLE IF NOT EXISTS gallery_images (
+    id SERIAL PRIMARY KEY,
+    src VARCHAR(255) NOT NULL,
+    alt VARCHAR(255),
+    sort_order INTEGER DEFAULT 0
+  )
+`)?.catch?.(err => console.error("Gallery migration error:", err.message));
+
 const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
@@ -66,7 +75,6 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-console.log("PASSPORT LOADED");
 
 app.use(
   session({
@@ -698,6 +706,76 @@ app.patch("/api/admin/configurator-inquiries/:id/reply", authenticateToken, requ
   } catch (err) {
     console.error("Failed to reply to configurator inquiry:", err.message);
     res.status(500).send("Server Error");
+  }
+});
+
+// ======================= GALLERY ROUTES =======================
+
+app.get("/api/gallery", async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM gallery_images ORDER BY sort_order ASC, id ASC");
+    res.json({ success: true, gallery: result.rows });
+  } catch (err) {
+    console.error("Failed to fetch gallery images:", err.message);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
+
+app.post("/api/gallery", authenticateToken, requireAdmin, async (req, res) => {
+  const { images } = req.body;
+  if (!images || !Array.isArray(images) || images.length === 0) {
+    return res.status(400).json({ success: false, error: "No images provided" });
+  }
+  try {
+    const maxOrderRes = await db.query("SELECT MAX(sort_order) as max FROM gallery_images");
+    let currentMax = maxOrderRes.rows[0].max || 0;
+    const inserted = [];
+    
+    for (const img of images) {
+      currentMax++;
+      const src = img.src || img.imageUrl;
+      const alt = img.alt || "Carbon.ez Gallery Image";
+      const result = await db.query(
+        "INSERT INTO gallery_images (src, alt, sort_order) VALUES ($1, $2, $3) RETURNING *",
+        [src, alt, currentMax]
+      );
+      inserted.push(result.rows[0]);
+    }
+    res.json({ success: true, inserted });
+  } catch (err) {
+    console.error("Failed to insert gallery images:", err.message);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
+
+app.put("/api/gallery/reorder", authenticateToken, requireAdmin, async (req, res) => {
+  const { updates } = req.body; // array of { id, sort_order }
+  if (!updates || !Array.isArray(updates)) {
+    return res.status(400).json({ success: false, error: "Invalid updates format" });
+  }
+  try {
+    // Basic iterative update (could be optimized with a transaction)
+    for (const update of updates) {
+      await db.query("UPDATE gallery_images SET sort_order = $1 WHERE id = $2", [update.sort_order, update.id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to reorder gallery images:", err.message);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
+
+app.delete("/api/gallery/:id", authenticateToken, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query("DELETE FROM gallery_images WHERE id = $1 RETURNING *", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "Image not found" });
+    }
+    res.json({ success: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error("Failed to delete gallery image:", err.message);
+    res.status(500).json({ success: false, error: "Server Error" });
   }
 });
 if (require.main === module) {

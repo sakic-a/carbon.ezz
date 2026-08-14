@@ -3,14 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useShop } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders, Loader2, GripVertical } from 'lucide-react';
+import { Package, MessageSquare, ShoppingBag, Trash2, Plus, Edit2, Sliders, Loader2, GripVertical, Image as ImageIcon, ArrowLeft, ArrowRight } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
   useSensor, useSensors, DragOverlay
 } from '@dnd-kit/core';
 import {
   arrayMove, SortableContext, sortableKeyboardCoordinates,
-  verticalListSortingStrategy, useSortable
+  verticalListSortingStrategy, rectSortingStrategy, useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIES } from '../data/categories';
@@ -69,10 +69,60 @@ function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete, onToggleSt
   );
 }
 
+function SortableGalleryItem({ img, onDelete, reorderMode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: img.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? 'transform 220ms ease',
+    opacity: isDragging ? 0 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-50"
+    >
+      <img
+          src={getImageUrl(img.src)}
+          alt={img.alt || `Gallery Image ${img.id}`}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+      <div className={`absolute inset-0 bg-black/50 transition-opacity flex flex-col items-center justify-center gap-2 ${reorderMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          {reorderMode ? (
+              <button
+                  type="button"
+                  className="bg-white text-black p-2 rounded hover:bg-gray-200 transition-all duration-200 cursor-grab active:cursor-grabbing"
+                  title="Drag to reorder"
+                  {...attributes}
+                  {...listeners}
+              >
+                  <GripVertical size={20} />
+              </button>
+          ) : (
+              <button
+                  type="button"
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm("Are you sure you want to delete this image?")) {
+                          onDelete(img.id);
+                      }
+                  }}
+                  className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition-all duration-200"
+                  title="Delete Image"
+                  onPointerDown={(e) => e.stopPropagation()}
+              >
+                  <Trash2 size={16} />
+              </button>
+          )}
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
     const { user, authLoading } = useAuth();
     const { t, lang } = useLanguage();
-    const { products, addProduct, updateProduct, deleteProduct } = useShop();
+    const { products, addProduct, updateProduct, deleteProduct, galleryImages, addGalleryImages, reorderGalleryImages, deleteGalleryImage } = useShop();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [messages, setMessages] = useState([]);
@@ -99,6 +149,9 @@ export default function Admin() {
     const [uploadingGallery, setUploadingGallery] = useState(false);
     const [dragOverMain, setDragOverMain] = useState(false);
     const [dragOverGallery, setDragOverGallery] = useState(false);
+    const [dragOverGalleryTab, setDragOverGalleryTab] = useState(false);
+    const [orderedGalleryImages, setOrderedGalleryImages] = useState([]);
+    const [activeGalleryId, setActiveGalleryId] = useState(null);
 
     const handleMainImageUpload = async (file) => {
         if (!file) return;
@@ -201,6 +254,10 @@ export default function Admin() {
         setOrderedProducts(products);
     }, [products]);
 
+    useEffect(() => {
+        setOrderedGalleryImages(galleryImages);
+    }, [galleryImages]);
+
     const handleStartEdit = (p) => {
         setEditingProductId(p.id);
         setPName(p.name);
@@ -236,6 +293,32 @@ export default function Admin() {
             const newIndex = prev.findIndex(p => p.id === over.id);
             return arrayMove(prev, oldIndex, newIndex);
         });
+    };
+
+    const handleGalleryDragStart = ({ active }) => setActiveGalleryId(active.id);
+
+    const handleGalleryDragEnd = ({ active, over }) => {
+        setActiveGalleryId(null);
+        if (!over || active.id === over.id) return;
+        setOrderedGalleryImages(prev => {
+            const oldIndex = prev.findIndex(img => img.id === active.id);
+            const newIndex = prev.findIndex(img => img.id === over.id);
+            return arrayMove(prev, oldIndex, newIndex);
+        });
+    };
+
+    const handleSaveGalleryReorder = async () => {
+        try {
+            const reordered = orderedGalleryImages.map((img, idx) => ({
+                id: img.id,
+                sort_order: idx
+            }));
+            await reorderGalleryImages(reordered);
+            setReorderMode(false);
+        } catch (err) {
+            console.error('Failed to save gallery order', err);
+            alert('Failed to save order. Please try again.');
+        }
     };
 
     const handleSaveReorder = async () => {
@@ -366,6 +449,12 @@ export default function Admin() {
                             onClick={() => { setActiveTab('messages'); setReorderMode(false); }}
                         >
                             <MessageSquare size={20} /> {t('admin', 'messages')}
+                        </button>
+                        <button
+                            className={`flex items-center gap-3 w-full p-3 rounded mb-2 text-left transition-colors ${activeTab === 'gallery' ? 'bg-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                            onClick={() => { setActiveTab('gallery'); setReorderMode(false); }}
+                        >
+                            <ImageIcon size={20} /> Gallery
                         </button>
                     </div>
                     <div className="bg-white p-8 rounded-lg shadow-sm min-w-0 overflow-hidden">
@@ -834,6 +923,139 @@ export default function Admin() {
                                         ))}
                                     </div>
                                 )}
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'gallery' && (
+                            <div>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-bold">Gallery</h2>
+                                    <div className="flex gap-2">
+                                        {reorderMode ? (
+                                            <>
+                                                <button onClick={() => { setReorderMode(false); setOrderedGalleryImages(galleryImages); }} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-300">
+                                                    {t('admin', 'cancel') || 'Cancel'}
+                                                </button>
+                                                <button onClick={handleSaveGalleryReorder} className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-600">
+                                                    {t('admin', 'reorderDone') || 'Save Order'}
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button onClick={() => setReorderMode(true)} className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50">
+                                                <GripVertical size={16} /> {t('admin', 'reorder') || 'Reorder'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="mb-8">
+                                    {uploadingGallery ? (
+                                        <div className="w-full h-32 flex flex-col items-center justify-center border-2 border-gray-200 border-dashed rounded-xl bg-gray-50">
+                                            <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                                            <span className="text-sm text-gray-500 font-medium">{t('admin', 'uploadingImage') || 'Uploading...'}</span>
+                                        </div>
+                                    ) : (
+                                        <label
+                                            className={`w-full h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer transition-all group ${dragOverGalleryTab ? 'border-primary bg-yellow-50/40 scale-[1.01]' : 'border-gray-300 hover:border-primary hover:bg-yellow-50/20'}`}
+                                            onDragOver={(e) => { e.preventDefault(); setDragOverGalleryTab(true); }}
+                                            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverGalleryTab(false); }}
+                                            onDrop={async (e) => { 
+                                                e.preventDefault(); 
+                                                setDragOverGalleryTab(false);
+                                                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                                                if (files.length === 0) return;
+                                                setUploadingGallery(true);
+                                                try {
+                                                    const formData = new FormData();
+                                                    files.forEach(f => formData.append('gallery', f));
+                                                    const res = await fetch('/api/upload-gallery', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                                                        },
+                                                        credentials: 'include',
+                                                        body: formData
+                                                    });
+                                                    const data = await res.json();
+                                                    if (data.success) {
+                                                        await addGalleryImages(data.imageUrls.map(url => ({ src: url })));
+                                                    } else {
+                                                        alert(data.error || "Upload failed");
+                                                    }
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert("Upload failed");
+                                                }
+                                                setUploadingGallery(false);
+                                            }}
+                                        >
+                                            <Plus className={`w-8 h-8 transition-colors mb-2 ${dragOverGalleryTab ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`} />
+                                            <span className={`text-sm font-semibold transition-colors ${dragOverGalleryTab ? 'text-primary' : 'text-gray-700 group-hover:text-primary'}`}>
+                                                {dragOverGalleryTab ? 'Drop images here' : (t('admin', 'addImage') || 'Add New Images')}
+                                            </span>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={async (e) => {
+                                                    const files = Array.from(e.target.files);
+                                                    if (files.length === 0) return;
+                                                    setUploadingGallery(true);
+                                                    try {
+                                                        const formData = new FormData();
+                                                        files.forEach(f => formData.append('gallery', f));
+                                                        const res = await fetch('/api/upload-gallery', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                                                            },
+                                                            credentials: 'include',
+                                                            body: formData
+                                                        });
+                                                        const data = await res.json();
+                                                        if (data.success) {
+                                                            await addGalleryImages(data.imageUrls.map(url => ({ src: url })));
+                                                        } else {
+                                                            alert(data.error || "Upload failed");
+                                                        }
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        alert("Upload failed");
+                                                    }
+                                                    setUploadingGallery(false);
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+
+                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleGalleryDragStart} onDragEnd={handleGalleryDragEnd}>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                        <SortableContext items={orderedGalleryImages.map(img => img.id)} strategy={rectSortingStrategy}>
+                                            {orderedGalleryImages.map((img) => (
+                                                <SortableGalleryItem
+                                                    key={img.id}
+                                                    img={img}
+                                                    onDelete={deleteGalleryImage}
+                                                    reorderMode={reorderMode}
+                                                />
+                                            ))}
+                                        </SortableContext>
+                                    </div>
+                                    <DragOverlay>
+                                        {activeGalleryId ? (
+                                            <div className="aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-xl bg-white opacity-80 scale-105">
+                                                <img
+                                                    src={getImageUrl(orderedGalleryImages.find(img => img.id === activeGalleryId)?.src)}
+                                                    alt="Dragging"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        ) : null}
+                                    </DragOverlay>
+                                </DndContext>
                             </div>
                         )}
                     </div>
