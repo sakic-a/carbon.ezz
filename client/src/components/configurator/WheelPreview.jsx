@@ -158,6 +158,39 @@ export default function WheelPreview({ onZoneClick }) {
 
       <img src="/wheels/audi/full/audi_hub.png" style={layer(wheelShape === 'full')} alt="" />
 
+      {/* Watermarks */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: '-20%',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gridTemplateRows: 'repeat(8, 1fr)',
+          placeItems: 'center',
+          opacity: 0.20,
+          pointerEvents: 'none',
+          zIndex: 11,
+          overflow: 'hidden'
+        }}
+      >
+        {Array.from({ length: 56 }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              transform: 'rotate(-25deg)',
+              fontFamily: '"Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+              fontSize: 'clamp(0.4rem, 1vw, 0.8rem)',
+              fontWeight: '500',
+              color: '#fff',
+              letterSpacing: '0.15em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            carbonez.ba
+          </div>
+        ))}
+      </div>
+
       {/* Grip outline SVG — fades in on hover, shaped like each grip zone */}
       {onZoneClick && (
         <svg

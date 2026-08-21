@@ -310,13 +310,47 @@ function ConfiguratorContent() {
               <div className="lg:rounded-xl overflow-hidden shadow-md bg-gray-100 relative select-none">
                 <WheelPreview onZoneClick={handleZoneClick} />
               </div>
-              <img
-                src={`/wheels/audi/thread/thread_${state.threadColour}.png`}
-                alt="Stitching thread"
-                className="w-full h-auto object-contain lg:cursor-default cursor-pointer rounded-b-xl"
-                style={{ transition: 'opacity 0.35s ease' }}
-                onClick={() => setActiveZone({ zone: 'thread' })}
-              />
+              <div className="relative w-full overflow-hidden lg:rounded-b-xl rounded-b-xl">
+                <img
+                  src={`/wheels/audi/thread/thread_${state.threadColour}.png`}
+                  alt="Stitching thread"
+                  className="w-full h-auto object-contain lg:cursor-default cursor-pointer"
+                  style={{ transition: 'opacity 0.35s ease' }}
+                  onClick={() => setActiveZone({ zone: 'thread' })}
+                />
+                {/* Watermarks for thread image */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-20%',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gridTemplateRows: 'repeat(3, 1fr)',
+                    placeItems: 'center',
+                    opacity: 0.28,
+                    pointerEvents: 'none',
+                    zIndex: 11,
+                    overflow: 'hidden'
+                  }}
+                >
+                  {Array.from({ length: 15 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        transform: 'rotate(-25deg)',
+                        fontFamily: '"Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                        fontSize: 'clamp(0.4rem, 1vw, 0.8rem)',
+                        fontWeight: '500',
+                        color: '#fff',
+                        letterSpacing: '0.15em',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      carbonez.ba
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Sidebar options panel */}
