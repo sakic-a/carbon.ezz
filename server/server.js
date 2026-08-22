@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET environment variable is required");
 if (!process.env.SESSION_SECRET) throw new Error("SESSION_SECRET environment variable is required");
 
