@@ -53,7 +53,12 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <p>{t("footer", "rights")}</p>
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <p>{t("footer", "rights")}</p>
+          <a href="/privacy-policy" className="text-sm text-carbon-400 hover:text-primary transition-colors underline">
+            Privacy Policy
+          </a>
+        </div>
       </div>
     </footer>
   );
