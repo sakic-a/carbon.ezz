@@ -33,7 +33,7 @@ function MaterialSelector({ label, options, value, actionType, highlight, gridCo
   );
 }
 
-export default function OptionsPanel({ onOpenInquiry, activeZone, onDownload }) {
+export default function OptionsPanel({ onOpenInquiry, activeZone, onDownload, onShare }) {
   const { state, dispatch } = useConfigurator();
   const { t } = useLanguage();
 
@@ -115,13 +115,21 @@ export default function OptionsPanel({ onOpenInquiry, activeZone, onDownload }) 
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3">
-        <button
-          onClick={onDownload}
-          className="w-full bg-black text-white hover:bg-gray-900 font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2"
-        >
-          {t('configurator', 'downloadDesign') || 'Download Design'}
-        </button>
+      <div className="mt-14 flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={onDownload}
+            className="w-full bg-primary hover:bg-yellow-400 text-black font-bold uppercase tracking-wide py-4 px-4 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 text-xs"
+          >
+            {t('configurator', 'downloadDesign') || 'Download'}
+          </button>
+          <button
+            onClick={onShare}
+            className="w-full bg-primary hover:bg-yellow-400 text-black font-bold uppercase tracking-wide py-4 px-4 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 text-xs"
+          >
+            {t('configurator', 'shareDesign') || 'Share'}
+          </button>
+        </div>
         <button
           onClick={onOpenInquiry}
           className="w-full bg-primary hover:bg-yellow-400 text-black font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2"

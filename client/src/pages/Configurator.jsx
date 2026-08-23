@@ -239,6 +239,31 @@ function ConfiguratorContent() {
     }
   };
 
+  const handleShare = async () => {
+    if (!wheelRef.current) return;
+    try {
+      const canvas = await html2canvas(wheelRef.current, { backgroundColor: null, useCORS: true });
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `carbonez-wheel-${state.selectedModel}.png`, { type: 'image/png' });
+        
+        const shareData = {
+          title: 'My Custom Carbon.ez Steering Wheel',
+          text: `Check out my custom steering wheel design from Carbon.ez!\nModel: ${state.selectedModel}\nShape: ${state.wheelShape}\nTop: ${state.topMaterial}\nSides: ${state.sideMaterial}\nBottom: ${state.bottomMaterial}\nStitching: ${state.threadColour}\nRing: ${state.ringEnabled ? state.ringColour : 'None'}\n\nBuild your own at carbonez.ba!`,
+          files: [file]
+        };
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share(shareData);
+        } else {
+          alert(t("configurator", "shareFallback") || "Your browser doesn't support sharing images directly. Please use the Download button!");
+        }
+      }, 'image/png');
+    } catch (err) {
+      console.error("Error sharing image:", err);
+    }
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('inquiry') === 'true') {
@@ -373,7 +398,7 @@ function ConfiguratorContent() {
 
             {/* Sidebar options panel */}
             <div className="px-4 lg:px-0 w-full lg:w-[46%] lg:border-l border-gray-200 shrink-0">
-              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} onDownload={handleDownload} />
+              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} onDownload={handleDownload} onShare={handleShare} />
             </div>
           </div>
         ) : (
