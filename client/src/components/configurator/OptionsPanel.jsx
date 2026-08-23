@@ -33,7 +33,7 @@ function MaterialSelector({ label, options, value, actionType, highlight, gridCo
   );
 }
 
-export default function OptionsPanel({ onOpenInquiry, activeZone }) {
+export default function OptionsPanel({ onOpenInquiry, activeZone, onDownload }) {
   const { state, dispatch } = useConfigurator();
   const { t } = useLanguage();
 
@@ -115,12 +115,20 @@ export default function OptionsPanel({ onOpenInquiry, activeZone }) {
         </div>
       </div>
 
-      <button
-        onClick={onOpenInquiry}
-        className="w-full bg-primary hover:bg-yellow-400 text-black font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 mt-8"
-      >
-        {t('configurator', 'inquiryButton')}
-      </button>
+      <div className="mt-8 flex flex-col gap-3">
+        <button
+          onClick={onDownload}
+          className="w-full bg-black text-white hover:bg-gray-900 font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2"
+        >
+          {t('configurator', 'downloadDesign') || 'Download Design'}
+        </button>
+        <button
+          onClick={onOpenInquiry}
+          className="w-full bg-primary hover:bg-yellow-400 text-black font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2"
+        >
+          {t('configurator', 'inquiryButton')}
+        </button>
+      </div>
     </div>
   );
 }

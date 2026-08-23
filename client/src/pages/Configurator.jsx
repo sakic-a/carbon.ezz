@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { ConfiguratorProvider } from '../context/ConfiguratorContext';
 import WheelPreview from '../components/configurator/WheelPreview';
 import OptionsPanel from '../components/configurator/OptionsPanel';
@@ -220,6 +221,23 @@ function ConfiguratorContent() {
   const location = useLocation();
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [activeZone, setActiveZone] = useState(null); // { zone, rect, anchor }
+  const wheelRef = useRef(null);
+
+  const handleDownload = async () => {
+    if (!wheelRef.current) return;
+    try {
+      const canvas = await html2canvas(wheelRef.current, { backgroundColor: null, useCORS: true });
+      const dataUrl = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `carbonez-wheel-${state.selectedModel}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Error generating image:", err);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -305,8 +323,8 @@ function ConfiguratorContent() {
         {selectedModel === 'audi' ? (
           <div className="flex flex-col lg:flex-row lg:gap-6 lg:px-4 items-start">
             {/* Preview — full-width on mobile, naturally, no negative-margin tricks */}
-            <div className="w-full lg:w-[54%] flex flex-col">
-              <p className="lg:hidden px-4 text-xs text-gray-400 text-center mb-2">{t('configurator', 'tapHint')}</p>
+            <div className="w-full lg:w-[54%] flex flex-col" ref={wheelRef}>
+              <p data-html2canvas-ignore="true" className="lg:hidden px-4 text-xs text-gray-400 text-center mb-2">{t('configurator', 'tapHint')}</p>
               <div className="lg:rounded-xl overflow-hidden shadow-md bg-gray-100 relative select-none">
                 <WheelPreview onZoneClick={handleZoneClick} />
               </div>
@@ -355,7 +373,7 @@ function ConfiguratorContent() {
 
             {/* Sidebar options panel */}
             <div className="px-4 lg:px-0 w-full lg:w-[46%] lg:border-l border-gray-200 shrink-0">
-              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} />
+              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} onDownload={handleDownload} />
             </div>
           </div>
         ) : (
