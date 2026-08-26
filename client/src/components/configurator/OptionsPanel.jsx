@@ -7,22 +7,19 @@ const topOptions    = ['smooth', 'alcantara', 'perforated', 'carbon'];
 const sideOptions   = ['smooth', 'alcantara', 'perforated'];
 const bottomOptions = ['smooth', 'alcantara', 'perforated', 'carbon'];
 
-function MaterialSelector({ label, options, value, actionType, highlight, stretch = true, equalWidth = false, className = 'mb-6' }) {
+function MaterialSelector({ label, options, value, actionType, highlight, gridCols = 'grid-cols-2', className = 'mb-6' }) {
   const { dispatch } = useConfigurator();
   const { t } = useLanguage();
 
   return (
     <div className={`${className} transition-all duration-300`}>
       <p className={`text-sm font-semibold uppercase tracking-wide mb-2 transition-all duration-300 border-l-[3px] pl-2 ${highlight ? 'border-primary' : 'border-transparent'}`}>{label}</p>
-      <div
-        className={equalWidth ? 'grid w-max gap-2' : 'flex flex-wrap gap-2'}
-        style={equalWidth ? { gridTemplateColumns: `repeat(${options.length}, 1fr)` } : {}}
-      >
+      <div className={`grid gap-2 ${gridCols}`}>
         {options.map(option => (
           <button
             key={option}
             onClick={() => dispatch({ type: actionType, value: option })}
-            className={`${equalWidth ? 'w-full' : stretch ? 'flex-1' : ''} px-4 py-2 rounded border text-sm capitalize transition-colors
+            className={`px-2 py-2 rounded border text-sm capitalize transition-colors
               ${value === option
                 ? 'bg-black text-white border-black'
                 : 'bg-white text-black border-gray-300 hover:border-black'
@@ -36,7 +33,7 @@ function MaterialSelector({ label, options, value, actionType, highlight, stretc
   );
 }
 
-export default function OptionsPanel({ onOpenInquiry, activeZone }) {
+export default function OptionsPanel({ onOpenInquiry, activeZone, onDownload, onShare }) {
   const { state, dispatch } = useConfigurator();
   const { t } = useLanguage();
 
@@ -63,12 +60,12 @@ export default function OptionsPanel({ onOpenInquiry, activeZone }) {
       </div>
 
       {/* Top + Bottom side by side */}
-      <div className="grid grid-cols-2 gap-8 mb-6">
-        <MaterialSelector label={t('configurator', 'top')}    options={topOptions}    value={state.topMaterial}    actionType="SET_TOP"    highlight={activeZone === 'top'}    className="" />
-        <MaterialSelector label={t('configurator', 'bottom')} options={bottomOptions} value={state.bottomMaterial} actionType="SET_BOTTOM" highlight={activeZone === 'bottom'} className="" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+        <MaterialSelector label={t('configurator', 'top')}    options={topOptions}    value={state.topMaterial}    actionType="SET_TOP"    highlight={activeZone === 'top'}    gridCols="grid-cols-2" className="" />
+        <MaterialSelector label={t('configurator', 'bottom')} options={bottomOptions} value={state.bottomMaterial} actionType="SET_BOTTOM" highlight={activeZone === 'bottom'} gridCols="grid-cols-2" className="" />
       </div>
 
-      <MaterialSelector label={t('configurator', 'sides')} options={sideOptions} value={state.sideMaterial} actionType="SET_SIDE" highlight={activeZone === 'sides'} equalWidth />
+      <MaterialSelector label={t('configurator', 'sides')} options={sideOptions} value={state.sideMaterial} actionType="SET_SIDE" highlight={activeZone === 'sides'} gridCols="grid-cols-2 md:grid-cols-4" />
 
       {/* Ring toggle + colour */}
       <div className="mb-6">
@@ -118,12 +115,28 @@ export default function OptionsPanel({ onOpenInquiry, activeZone }) {
         </div>
       </div>
 
-      <button
-        onClick={onOpenInquiry}
-        className="w-full bg-primary hover:bg-yellow-400 text-black font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 mt-8"
-      >
-        {t('configurator', 'inquiryButton')}
-      </button>
+      <div className="mt-14 flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={onDownload}
+            className="w-full bg-primary hover:bg-yellow-400 text-black font-bold uppercase tracking-wide py-4 px-4 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 text-xs"
+          >
+            {t('configurator', 'downloadDesign') || 'Download'}
+          </button>
+          <button
+            onClick={onShare}
+            className="w-full bg-primary hover:bg-yellow-400 text-black font-bold uppercase tracking-wide py-4 px-4 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2 text-xs"
+          >
+            {t('configurator', 'shareDesign') || 'Share'}
+          </button>
+        </div>
+        <button
+          onClick={onOpenInquiry}
+          className="w-full bg-primary hover:bg-yellow-400 text-black font-extrabold uppercase tracking-wider py-4 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md flex items-center justify-center gap-2"
+        >
+          {t('configurator', 'inquiryButton')}
+        </button>
+      </div>
     </div>
   );
 }

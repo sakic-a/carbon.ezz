@@ -1,5 +1,8 @@
 import { Instagram, Facebook, MapPin, ShoppingBag, Mail } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+
 export default function Footer() {
+  const { t } = useLanguage();
   return (
     <footer className="bg-black text-white py-10 text-center mt-auto">
       <div className="container mx-auto px-4">
@@ -38,10 +41,10 @@ export default function Footer() {
         <div className="opacity-80 text-sm mb-5">
           <div>
             <MapPin size={18} className="inline mr-1" />
-            Visoko, Bosnia and Herzegovina
+            {t("footer", "location")}
           </div>
           <div className="mt-2">
-            <span className="font-bold">Phone:</span>{" "}
+            <span className="font-bold">{t("footer", "phone")}</span>{" "}
             <a
               href="tel:+38761353966"
               className="hover:text-primary transition-colors underline underline-offset-2"
@@ -50,7 +53,12 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <p>&copy; 2026 Carbon.ez. All rights reserved.</p>
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <p>{t("footer", "rights")}</p>
+          <a href="/privacy-policy" className="text-sm text-carbon-400 hover:text-primary transition-colors underline">
+            Privacy Policy
+          </a>
+        </div>
       </div>
     </footer>
   );

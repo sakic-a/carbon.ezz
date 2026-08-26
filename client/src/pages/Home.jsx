@@ -24,6 +24,15 @@ export default function Home() {
   const { t, lang } = useLanguage();
   const { products } = useShop();
   const featured = products.slice(0, 3);
+  
+  const galleryImages = [
+    { src: "/images/bmw-wheel.png", alt: "BMW M-Performance Carbon" },
+    { src: "/images/mercedes-wheel.png", alt: "AMG Alcantara & Carbon" },
+    { src: "/images/forged-detail.png", alt: "Forged Carbon Detail" },
+    { src: "/images/racing-wheel.png", alt: "Custom Racing Wheel" },
+    { src: "/images/audi-wheel.png", alt: "Audi RS Flat Bottom" },
+    { src: "/images/tesla-yoke.png", alt: "Tesla Yoke Carbon" },
+  ];
 
   return (
     <>
@@ -38,7 +47,7 @@ export default function Home() {
               {t("home", "configureYours")} <ArrowRight size={15} />
             </Link>
             <Link to="/shop" className="hp-btn-ghost">
-              {t("hero", "cta")} <ChevronRight size={15} />
+              {t("hero", "cta")} <ArrowRight size={15} />
             </Link>
           </div>
         </div>
@@ -98,7 +107,6 @@ export default function Home() {
           <div className="hp-cta__stats">
             {[
               { n: "100%", l: lang === "bs" ? "OEM Fitment" : "OEM Fitment" },
-              { n: "5★",   l: lang === "bs" ? "Ocjena" : "Rating" },
               { n: "5+",   l: lang === "bs" ? "Godine" : "Years" },
             ].map(({ n, l }) => (
               <div key={l} className="hp-stat">
@@ -117,18 +125,41 @@ export default function Home() {
             <p className="hp-label">{lang === "bs" ? "Ponuda" : "Shop"}</p>
             <h2 className="hp-section__title" style={{ marginBottom: 0 }}>{t("shop", "title")}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
+          
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <h3 className="text-3xl font-extrabold text-gray-300 mb-2 uppercase tracking-widest">
+              {t("configurator", "comingSoon")}
+            </h3>
+            <p className="text-gray-500 max-w-sm mx-auto text-sm">
+              {lang === "bs" ? "Naša trgovina je trenutno u pripremi." : "Our shop is currently being prepared."}
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── GALLERY PREVIEW ─────────────────────────────────────── */}
+      <section className="hp-section hp-section--white">
+        <div className="container mx-auto px-6">
+          <div style={{ textAlign: "center", marginBottom: 52 }}>
+            <p className="hp-label">{lang === "bs" ? "Naši radovi" : "Our Work"}</p>
+            <h2 className="hp-section__title" style={{ marginBottom: 0 }}>{t("nav", "gallery")}</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {galleryImages.map((image, i) => (
+              <div key={i} className="rounded-lg overflow-hidden shadow-sm bg-gray-100 relative group aspect-square">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
             ))}
           </div>
           <div style={{ textAlign: "center", marginTop: 40 }}>
-            <Link
-              to="/shop"
-              className="hp-btn-outline"
-              onClick={() => sessionStorage.removeItem("shopScrollY")}
-            >
-              {t("shop", "viewAll")} <ArrowRight size={14} />
+            <Link to="/gallery" className="hp-btn-outline" onClick={() => window.scrollTo(0, 0)}>
+              {lang === "bs" ? "Pogledaj cijelu galeriju" : "View Full Gallery"} <ArrowRight size={14} />
             </Link>
           </div>
         </div>
@@ -148,7 +179,7 @@ export default function Home() {
           padding: 100px 24px 80px;
           border-bottom: 1px solid #1a1a1a;
         }
-        .hp-hero__content { max-width: 680px; }
+        .hp-hero__content { max-width: 1000px; }
         .hp-hero__tag {
           display: inline-block;
           font-size: 0.7rem;
@@ -156,21 +187,21 @@ export default function Home() {
           letter-spacing: 0.2em;
           text-transform: uppercase;
           color: rgba(255,255,255,0.35);
-          margin-bottom: 28px;
+          margin-bottom: 40px;
         }
         .hp-hero__h1 {
-          font-size: clamp(3rem, 6vw, 5.5rem);
+          font-size: clamp(48px, 6vw, 88px);
           font-weight: 900;
           letter-spacing: -0.04em;
           line-height: 1.0;
           color: #fff;
-          margin-bottom: 24px;
+          margin-bottom: 36px;
         }
         .hp-hero__sub {
           font-size: 1.05rem;
           color: rgba(255,255,255,0.42);
           line-height: 1.8;
-          margin-bottom: 40px;
+          margin-bottom: 56px;
         }
         .hp-hero__btns {
           display: flex;
@@ -343,13 +374,13 @@ export default function Home() {
         }
         .hp-service__icon { color: #111; }
         .hp-service__title {
-          font-size: 1.2rem;
+          font-size: 1.4rem;
           font-weight: 800;
           color: #111;
           margin-bottom: 10px;
         }
         .hp-service__desc {
-          font-size: 1rem;
+          font-size: 0.95rem;
           color: #6b7280;
           line-height: 1.7;
         }

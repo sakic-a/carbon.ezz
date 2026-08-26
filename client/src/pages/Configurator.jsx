@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { ConfiguratorProvider } from '../context/ConfiguratorContext';
 import WheelPreview from '../components/configurator/WheelPreview';
 import OptionsPanel from '../components/configurator/OptionsPanel';
@@ -7,7 +8,7 @@ import { useConfigurator } from '../context/ConfiguratorContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, X } from 'lucide-react';
 
 
@@ -16,25 +17,38 @@ function PriceInquiryModal({ isOpen, onClose }) {
   const { user } = useAuth();
   const { submitInquiry } = useShop();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState("");
-  const [carModel, setCarModel] = useState("");
-  const [notes, setNotes] = useState("");
+  const [name, setName] = useState(() => sessionStorage.getItem('inquiry_name') || user?.name || "");
+  const [email, setEmail] = useState(() => sessionStorage.getItem('inquiry_email') || user?.email || "");
+  const [phone, setPhone] = useState(() => sessionStorage.getItem('inquiry_phone') || "");
+  const [carModel, setCarModel] = useState(() => sessionStorage.getItem('inquiry_car') || "");
+  const [notes, setNotes] = useState(() => sessionStorage.getItem('inquiry_notes') || "");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setName(user.name || "");
-      setEmail(user.email || "");
+      setName(prev => prev || user.name || "");
+      setEmail(prev => prev || user.email || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    sessionStorage.setItem('inquiry_name', name);
+    sessionStorage.setItem('inquiry_email', email);
+    sessionStorage.setItem('inquiry_phone', phone);
+    sessionStorage.setItem('inquiry_car', carModel);
+    sessionStorage.setItem('inquiry_notes', notes);
+  }, [name, email, phone, carModel, notes]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      navigate('/login?redirect=/configurator?inquiry=true');
+      return;
+    }
     setLoading(true);
 
     const inquiryData = {
@@ -56,6 +70,11 @@ function PriceInquiryModal({ isOpen, onClose }) {
     const success = await submitInquiry(inquiryData);
     setLoading(false);
     if (success) {
+      sessionStorage.removeItem('inquiry_name');
+      sessionStorage.removeItem('inquiry_email');
+      sessionStorage.removeItem('inquiry_phone');
+      sessionStorage.removeItem('inquiry_car');
+      sessionStorage.removeItem('inquiry_notes');
       alert(t("configurator", "inquirySuccess"));
       dispatch({ type: 'RESET' });
       onClose();
@@ -67,7 +86,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8 animate-fade-in relative border border-gray-100 max-h-[90vh] overflow-y-auto">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors"
         >
@@ -135,7 +154,6 @@ function PriceInquiryModal({ isOpen, onClose }) {
             <input
               type="email"
               className="w-full p-3 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -161,7 +179,10 @@ function PriceInquiryModal({ isOpen, onClose }) {
               className="w-full p-3 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black outline-none transition-all text-sm"
               required
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^\d\s\+\-\(\)]/g, '');
+                setPhone(val);
+              }}
               placeholder="+387 61 123 456"
             />
           </div>
@@ -197,8 +218,59 @@ function ConfiguratorContent() {
   const { selectedModel } = state;
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [activeZone, setActiveZone] = useState(null); // { zone, rect, anchor }
+  const wheelRef = useRef(null);
+
+  const handleDownload = async () => {
+    if (!wheelRef.current) return;
+    try {
+      const canvas = await html2canvas(wheelRef.current, { backgroundColor: null, useCORS: true });
+      const dataUrl = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `carbonez-wheel-${state.selectedModel}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Error generating image:", err);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!wheelRef.current) return;
+    try {
+      const canvas = await html2canvas(wheelRef.current, { backgroundColor: null, useCORS: true });
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `carbonez-wheel-${state.selectedModel}.png`, { type: 'image/png' });
+
+        const shareData = {
+          title: 'My Custom Carbon.ez Steering Wheel',
+          text: `Check out my custom steering wheel design from Carbon.ez!\nModel: ${state.selectedModel}\nShape: ${state.wheelShape}\nTop: ${state.topMaterial}\nSides: ${state.sideMaterial}\nBottom: ${state.bottomMaterial}\nStitching: ${state.threadColour}\nRing: ${state.ringEnabled ? state.ringColour : 'None'}\n\nBuild your own at carbonez.ba!`,
+          files: [file]
+        };
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share(shareData);
+        } else {
+          alert(t("configurator", "shareFallback") || "Your browser doesn't support sharing images directly. Please use the Download button!");
+        }
+      }, 'image/png');
+    } catch (err) {
+      console.error("Error sharing image:", err);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('inquiry') === 'true') {
+      setInquiryOpen(true);
+      navigate('/configurator', { replace: true });
+    }
+  }, [location, navigate]);
 
   const handleZoneClick = (zone, rect, anchor) => {
     setActiveZone({ zone, rect, anchor });
@@ -211,10 +283,6 @@ function ConfiguratorContent() {
   ];
 
   const handleOpenInquiry = () => {
-    if (!user) {
-      navigate('/login?redirect=/configurator');
-      return;
-    }
     setInquiryOpen(true);
   };
 
@@ -230,16 +298,16 @@ function ConfiguratorContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {models.map(model => (
-              <div 
-                key={model.id} 
+              <div
+                key={model.id}
                 className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all p-6 flex flex-col justify-between"
               >
                 <div>
                   <div className="aspect-[4/3] bg-gray-50 rounded-xl overflow-hidden mb-6 flex items-center justify-center p-4">
                     {model.image ? (
-                      <img 
-                        src={model.image} 
-                        alt={model.name} 
+                      <img
+                        src={model.image}
+                        alt={model.name}
                         className="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -280,23 +348,57 @@ function ConfiguratorContent() {
         {selectedModel === 'audi' ? (
           <div className="flex flex-col lg:flex-row lg:gap-6 lg:px-4 items-start">
             {/* Preview — full-width on mobile, naturally, no negative-margin tricks */}
-            <div className="w-full lg:w-[54%] flex flex-col">
-              <p className="lg:hidden px-4 text-xs text-gray-400 text-center mb-2">{t('configurator', 'tapHint')}</p>
+            <div className="w-full lg:w-[54%] flex flex-col" ref={wheelRef}>
+              <p data-html2canvas-ignore="true" className="lg:hidden px-4 text-xs text-gray-400 text-center mb-2">{t('configurator', 'tapHint')}</p>
               <div className="lg:rounded-xl overflow-hidden shadow-md bg-gray-100 relative select-none">
                 <WheelPreview onZoneClick={handleZoneClick} />
               </div>
-              <img
-                src={`/wheels/audi/thread/thread_${state.threadColour}.png`}
-                alt="Stitching thread"
-                className="w-full h-auto object-contain lg:cursor-default cursor-pointer rounded-b-xl"
-                style={{ transition: 'opacity 0.35s ease' }}
-                onClick={() => setActiveZone({ zone: 'thread' })}
-              />
+              <div className="relative w-full overflow-hidden lg:rounded-b-xl rounded-b-xl">
+                <img
+                  src={`/wheels/audi/thread/thread_${state.threadColour}.png`}
+                  alt="Stitching thread"
+                  className="w-full h-auto object-contain lg:cursor-default cursor-pointer"
+                  style={{ transition: 'opacity 0.35s ease' }}
+                  onClick={() => setActiveZone({ zone: 'thread' })}
+                />
+                {/* Watermarks for thread image */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-20%',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gridTemplateRows: 'repeat(3, 1fr)',
+                    placeItems: 'center',
+                    opacity: 0.28,
+                    pointerEvents: 'none',
+                    zIndex: 11,
+                    overflow: 'hidden'
+                  }}
+                >
+                  {Array.from({ length: 15 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        transform: 'rotate(-25deg)',
+                        fontFamily: '"Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                        fontSize: 'clamp(0.4rem, 1vw, 0.8rem)',
+                        fontWeight: '500',
+                        color: '#fff',
+                        letterSpacing: '0.15em',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      carbonez.ba
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Sidebar options panel */}
             <div className="px-4 lg:px-0 w-full lg:w-[46%] lg:border-l border-gray-200 shrink-0">
-              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} />
+              <OptionsPanel onOpenInquiry={handleOpenInquiry} activeZone={activeZone?.zone} onDownload={handleDownload} onShare={handleShare} />
             </div>
           </div>
         ) : (

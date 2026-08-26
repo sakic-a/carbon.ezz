@@ -22,6 +22,8 @@ import ProductDetails from "./pages/ProductDetails";
 import UserDashboard from "./pages/UserDashboard";
 import GoogleCallback from "./pages/GoogleCallback";
 import Configurator from "./pages/Configurator";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import CookieBanner from "./components/common/CookieBanner";
 
 function App() {
   return (
@@ -45,9 +47,11 @@ function App() {
                   <Route path="/dashboard" element={<UserDashboard />} />
                   <Route path="/auth/google/callback" element={<GoogleCallback />} />
                   <Route path="/configurator" element={<Configurator />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 </Routes>
               </main>
               <Footer />
+              <CookieBanner />
             </div>
           </ShopProvider>
         </AuthProvider>

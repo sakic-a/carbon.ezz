@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET environment variable is required");
 if (!process.env.SESSION_SECRET) throw new Error("SESSION_SECRET environment variable is required");
 
@@ -9,6 +10,9 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const jwt = require("jsonwebtoken");
+
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const cors = require("cors");
 const db = require("./db");
@@ -43,6 +47,24 @@ db.query(`
 
 const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
 app.use(cors({ origin: allowedOrigin, credentials: true }));
+app.use(helmet());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 150, // limit each IP to 150 requests per windowMs
+  message: { success: false, error: "Too many requests, please try again later." }
+});
+app.use("/api/", apiLimiter);
+
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15, // limit each IP to 15 requests per windowMs
+  message: { success: false, error: "Too many attempts, please try again later." }
+});
+app.use("/api/auth/login", strictLimiter);
+app.use("/api/auth/register", strictLimiter);
+app.use("/api/inquiries", strictLimiter);
+
 app.use(express.json());
 app.use(cookieParser());
 

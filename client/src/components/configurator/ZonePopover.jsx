@@ -70,7 +70,7 @@ export default function ZonePopover({ zone, onClose }) {
     onClose();
   };
 
-  const zoneLabel = zone === 'hub' ? t('configurator', 'wheelType') : t('configurator', zone);
+  const zoneLabel = zone === 'hub' ? t('configurator', 'wheelType') : zone === 'thread' ? t('configurator', 'stitching') : t('configurator', zone);
 
   return (
     <div

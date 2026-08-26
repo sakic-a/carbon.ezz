@@ -1,18 +1,13 @@
 import { useLanguage } from "../context/LanguageContext";
 import { useShop } from "../context/ShopContext";
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
 export default function About() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { sendMessage } = useShop();
-  const [openFaq, setOpenFaq] = useState(null);
   const [cName, setCName] = useState("");
   const [cEmail, setCEmail] = useState("");
   const [cPhone, setCPhone] = useState("");
   const [cMessage, setCMessage] = useState("");
-  const toggleFaq = (index) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
   const handleSendMessage = async (e) => {
     e.preventDefault();
     const ok = await sendMessage({
@@ -28,13 +23,9 @@ export default function About() {
       setCPhone("");
       setCMessage("");
     } else {
-      alert("Something went wrong. Please try again.");
+      alert(t("faq", "error") || "Something went wrong. Please try again.");
     }
   };
-  const faqs = [
-    { q: t("faq", "q1"), a: t("faq", "a1") },
-    { q: t("faq", "q2"), a: t("faq", "a2") },
-  ];
   return (
     <div className="py-16 bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 max-w-3xl">
@@ -43,35 +34,12 @@ export default function About() {
         </h1>
         <div className="text-center text-lg text-gray-600 leading-relaxed mb-12">
           <p className="mb-6">{t("about", "p1")}</p>
-          <p>{t("about", "p2")}</p>
-        </div>
-        <h2 className="text-2xl font-bold text-center mb-8 text-black">
-          {t("faq", "title")}
-        </h2>
-        <div className="space-y-4 mb-16">
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
-            >
-              <div
-                className="p-5 flex justify-between items-center cursor-pointer font-semibold hover:bg-gray-50 transition-colors"
-                onClick={() => toggleFaq(index)}
-              >
-                <span>{faq.q}</span>
-                {openFaq === index ? (
-                  <ChevronUp size={20} />
-                ) : (
-                  <ChevronDown size={20} />
-                )}
-              </div>
-              {openFaq === index && (
-                <div className="p-5 pt-0 text-gray-600 border-t border-gray-100 mt-2">
-                  <p className="pt-2">{faq.a}</p>
-                </div>
-              )}
-            </div>
-          ))}
+          <p className="mb-6">{t("about", "p2")}</p>
+          <p className="mb-6">{t("about", "p3")}</p>
+          <p className="mb-6">{t("about", "p4")}</p>
+          <p className="mb-6">{t("about", "p5")}</p>
+          <p className="mb-2 font-bold">{t("about", "p6")}</p>
+          <p className="font-bold text-black">{t("about", "p7")}</p>
         </div>
         <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-2xl font-bold text-center mb-2">
@@ -101,7 +69,6 @@ export default function About() {
                 placeholder={t("auth", "name")}
                 value={cName}
                 onChange={(e) => setCName(e.target.value)}
-                required
               />
               <input
                 type="email"
@@ -109,15 +76,20 @@ export default function About() {
                 placeholder={t("auth", "email")}
                 value={cEmail}
                 onChange={(e) => setCEmail(e.target.value)}
-                required
               />
               <input
                 type="tel"
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary md:col-span-2"
                 placeholder={t("faq", "phone")}
                 value={cPhone}
-                onChange={(e) => setCPhone(e.target.value)}
+                onChange={(e) => setCPhone(e.target.value.replace(/[^0-9+]/g, ""))}
                 required
+                onInvalid={(e) =>
+                  e.target.setCustomValidity(
+                    lang === "bs" ? "Molimo ispunite ovo polje." : "Please fill out this field."
+                  )
+                }
+                onInput={(e) => e.target.setCustomValidity("")}
               />
             </div>
             <textarea
@@ -127,6 +99,12 @@ export default function About() {
               value={cMessage}
               onChange={(e) => setCMessage(e.target.value)}
               required
+              onInvalid={(e) =>
+                e.target.setCustomValidity(
+                  lang === "bs" ? "Molimo ispunite ovo polje." : "Please fill out this field."
+                )
+              }
+              onInput={(e) => e.target.setCustomValidity("")}
             ></textarea>
             <button
               type="submit"

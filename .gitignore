@@ -43,3 +43,5 @@ next-env.d.ts
 # user uploads
 server/uploads/
 
+# AI agent skills
+.agents/
