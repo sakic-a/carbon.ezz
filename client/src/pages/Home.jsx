@@ -22,17 +22,10 @@ const carbonBg = {
 
 export default function Home() {
   const { t, lang } = useLanguage();
-  const { products } = useShop();
+  const { products, galleryImages: shopGalleryImages } = useShop();
   const featured = products.slice(0, 3);
   
-  const galleryImages = [
-    { src: "/images/bmw-wheel.png", alt: "BMW M-Performance Carbon" },
-    { src: "/images/mercedes-wheel.png", alt: "AMG Alcantara & Carbon" },
-    { src: "/images/forged-detail.png", alt: "Forged Carbon Detail" },
-    { src: "/images/racing-wheel.png", alt: "Custom Racing Wheel" },
-    { src: "/images/audi-wheel.png", alt: "Audi RS Flat Bottom" },
-    { src: "/images/tesla-yoke.png", alt: "Tesla Yoke Carbon" },
-  ];
+  const galleryImages = shopGalleryImages ? shopGalleryImages.slice(0, 6) : [];
 
   return (
     <>
