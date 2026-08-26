@@ -125,20 +125,16 @@ export default function Home() {
             <p className="hp-label">{lang === "bs" ? "Ponuda" : "Shop"}</p>
             <h2 className="hp-section__title" style={{ marginBottom: 0 }}>{t("shop", "title")}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+          
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <h3 className="text-3xl font-extrabold text-gray-300 mb-2 uppercase tracking-widest">
+              {t("configurator", "comingSoon")}
+            </h3>
+            <p className="text-gray-500 max-w-sm mx-auto text-sm">
+              {lang === "bs" ? "Naša trgovina je trenutno u pripremi." : "Our shop is currently being prepared."}
+            </p>
           </div>
-          <div style={{ textAlign: "center", marginTop: 40 }}>
-            <Link
-              to="/shop"
-              className="hp-btn-outline"
-              onClick={() => sessionStorage.removeItem("shopScrollY")}
-            >
-              {t("shop", "viewAll")} <ArrowRight size={14} />
-            </Link>
-          </div>
+
         </div>
       </section>
 

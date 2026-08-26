@@ -152,7 +152,7 @@ export default function Navbar() {
             </span>
           </button>
 
-          <Link
+          {/* <Link
             to="/cart"
             className="relative flex items-center text-secondary hover:text-primary transition-colors"
           >
@@ -162,7 +162,7 @@ export default function Navbar() {
                 {cartCount}
               </span>
             )}
-          </Link>
+          </Link> */}
 
           {user?.role !== "admin" && (
             <Link

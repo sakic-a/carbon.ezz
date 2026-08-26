@@ -5,7 +5,7 @@ import ProductCard from "../components/ProductCard";
 import { CATEGORIES } from "../data/categories";
 
 export default function Shop() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { products } = useShop();
   const [filter, setFilter] = useState("all");
   const [isRestoringScroll, setIsRestoringScroll] = useState(() => {
@@ -67,10 +67,13 @@ export default function Shop() {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-300 mb-4 uppercase tracking-widest">
+            {t("configurator", "comingSoon")}
+          </h2>
+          <p className="text-gray-500 max-w-md mx-auto">
+            {lang === "bs" ? "Naša trgovina je trenutno u pripremi." : "Our shop is currently being prepared."}
+          </p>
         </div>
       </div>
     </div>
