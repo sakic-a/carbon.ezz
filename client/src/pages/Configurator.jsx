@@ -86,7 +86,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8 animate-fade-in relative border border-gray-100 max-h-[90vh] overflow-y-auto">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors"
         >
@@ -246,7 +246,7 @@ function ConfiguratorContent() {
       canvas.toBlob(async (blob) => {
         if (!blob) return;
         const file = new File([blob], `carbonez-wheel-${state.selectedModel}.png`, { type: 'image/png' });
-        
+
         const shareData = {
           title: 'My Custom Carbon.ez Steering Wheel',
           text: `Check out my custom steering wheel design from Carbon.ez!\nModel: ${state.selectedModel}\nShape: ${state.wheelShape}\nTop: ${state.topMaterial}\nSides: ${state.sideMaterial}\nBottom: ${state.bottomMaterial}\nStitching: ${state.threadColour}\nRing: ${state.ringEnabled ? state.ringColour : 'None'}\n\nBuild your own at carbonez.ba!`,
@@ -298,16 +298,16 @@ function ConfiguratorContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {models.map(model => (
-              <div 
-                key={model.id} 
+              <div
+                key={model.id}
                 className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all p-6 flex flex-col justify-between"
               >
                 <div>
                   <div className="aspect-[4/3] bg-gray-50 rounded-xl overflow-hidden mb-6 flex items-center justify-center p-4">
                     {model.image ? (
-                      <img 
-                        src={model.image} 
-                        alt={model.name} 
+                      <img
+                        src={model.image}
+                        alt={model.name}
                         className="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-300"
                       />
                     ) : (

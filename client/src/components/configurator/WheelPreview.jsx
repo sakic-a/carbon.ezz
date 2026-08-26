@@ -114,7 +114,8 @@ export default function WheelPreview({ onZoneClick }) {
     width: '100%', height: '100%',
     objectFit: 'contain',
     opacity: visible ? 1 : 0,
-    transition: 'opacity 0.35s ease',
+    visibility: visible ? 'visible' : 'hidden',
+    transition: 'opacity 0.35s ease, visibility 0.35s ease',
     pointerEvents: 'none',
   });
 
