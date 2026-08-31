@@ -22,6 +22,7 @@ const passport = require("passport");
 const session = require("express-session");
 require("./config/passport");
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5001;
 
 const COOKIE_OPTIONS = {
