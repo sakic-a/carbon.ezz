@@ -3,10 +3,9 @@ import { ShoppingCart, Menu, X, Globe, LogOut, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import
+import { useShop } from "../context/ShopContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
- { useShop } from "../context/ShopContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

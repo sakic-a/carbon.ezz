@@ -14,10 +14,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIES } from '../data/categories';
-import
+import { getImageUrl } from '../utils/imageUrl';
 
 const API_URL = import.meta.env.VITE_API_URL || "";
- { getImageUrl } from '../utils/imageUrl';
 function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete, onToggleStock }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
   const style = {
@@ -166,7 +165,7 @@ export default function Admin() {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            const res = await fetch(`${API_URL}/api/upload", {
+            const res = await fetch(`${API_URL}/api/upload`, {
                 method: "POST",
                 credentials: "include",
                 body: formData,
@@ -197,7 +196,7 @@ export default function Admin() {
         const formData = new FormData();
         files.forEach((file) => formData.append("gallery", file));
         try {
-            const res = await fetch(`${API_URL}/api/upload-gallery", {
+            const res = await fetch(`${API_URL}/api/upload-gallery`, {
                 method: "POST",
                 credentials: "include",
                 body: formData,
@@ -221,19 +220,19 @@ export default function Admin() {
             navigate('/login');
             return;
         }
-        fetch(`${API_URL}/api/admin/orders', { credentials: "include" })
+        fetch(`${API_URL}/api/admin/orders`, { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch(`${API_URL}/api/admin/messages', { credentials: "include" })
+        fetch(`${API_URL}/api/admin/messages`, { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setMessages(data);
             })
             .catch(err => console.error("Failed to load messages", err));
-        fetch(`${API_URL}/api/admin/configurator-inquiries', { credentials: "include" })
+        fetch(`${API_URL}/api/admin/configurator-inquiries`, { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setInquiries(data);
@@ -326,7 +325,7 @@ export default function Admin() {
 
     const handleSaveReorder = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/products/reorder', {
+            const res = await fetch(`${API_URL}/api/products/reorder`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
@@ -971,7 +970,7 @@ export default function Admin() {
                                                 try {
                                                     const formData = new FormData();
                                                     files.forEach(f => formData.append('gallery', f));
-                                                    const res = await fetch(`${API_URL}/api/upload-gallery', {
+                                                    const res = await fetch(`${API_URL}/api/upload-gallery`, {
                                                         method: 'POST',
                                                         headers: {
                                                             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
@@ -1008,7 +1007,7 @@ export default function Admin() {
                                                     try {
                                                         const formData = new FormData();
                                                         files.forEach(f => formData.append('gallery', f));
-                                                        const res = await fetch(`${API_URL}/api/upload-gallery', {
+                                                        const res = await fetch(`${API_URL}/api/upload-gallery`, {
                                                             method: 'POST',
                                                             headers: {
                                                                 'Authorization': `Bearer ${localStorage.getItem('token') || ''}`

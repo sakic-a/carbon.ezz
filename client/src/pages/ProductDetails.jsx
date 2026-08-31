@@ -4,10 +4,9 @@ import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { Check, Plus, ArrowLeft, Truck, Shield, Clock } from "lucide-react";
-import
+import { getImageUrl } from "../utils/imageUrl";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
- { getImageUrl } from "../utils/imageUrl";
 export default function ProductDetails() {
   const { id } = useParams();
   const { addToCart } = useShop();

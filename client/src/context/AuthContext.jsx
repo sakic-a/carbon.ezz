@@ -1,7 +1,6 @@
-import
+import { createContext, useContext, useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
- { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -19,7 +18,7 @@ export function AuthProvider({ children }) {
   }, []);
   const login = async (email, password) => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/login", {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -37,7 +36,7 @@ export function AuthProvider({ children }) {
   };
   const register = async (name, email, password) => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/register", {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -54,7 +53,7 @@ export function AuthProvider({ children }) {
     }
   };
   const logout = () => {
-    fetch(`${API_URL}/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
+    fetch(`${API_URL}/api/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
     localStorage.removeItem("user");
     setUser(null);
   };
