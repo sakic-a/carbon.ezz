@@ -4,7 +4,10 @@ import { useShop } from "../context/ShopContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { Check, Plus, ArrowLeft, Truck, Shield, Clock } from "lucide-react";
-import { getImageUrl } from "../utils/imageUrl";
+import
+
+const API_URL = import.meta.env.VITE_API_URL || "";
+ { getImageUrl } from "../utils/imageUrl";
 export default function ProductDetails() {
   const { id } = useParams();
   const { addToCart } = useShop();
@@ -15,7 +18,7 @@ export default function ProductDetails() {
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState("");
   useEffect(() => {
-    fetch(`/api/products/${id}`)
+    fetch(`${API_URL}/api/products/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Product not found");
         return res.json();

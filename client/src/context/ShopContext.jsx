@@ -1,4 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import
+
+const API_URL = import.meta.env.VITE_API_URL || "";
+ { createContext, useContext, useState, useEffect } from "react";
 const ShopContext = createContext();
 
 export function ShopProvider({ children }) {
@@ -8,7 +11,7 @@ export function ShopProvider({ children }) {
 
   const fetchGallery = async () => {
     try {
-      const res = await fetch("/api/gallery");
+      const res = await fetch(`${API_URL}/api/gallery");
       const data = await res.json();
       if (data.success) {
         setGalleryImages(data.gallery);
@@ -23,7 +26,7 @@ export function ShopProvider({ children }) {
     if (storedCart) {
       setCart(JSON.parse(storedCart));
     }
-    fetch("/api/products")
+    fetch(`${API_URL}/api/products")
       .then((res) => res.json())
       .then((data) => setProductsList(data))
       .catch((err) => console.error("Failed to load products", err));
@@ -52,7 +55,7 @@ export function ShopProvider({ children }) {
   const clearCart = () => setCart([]);
   const addProduct = async (product) => {
     try {
-      const response = await fetch("/api/products", {
+      const response = await fetch(`${API_URL}/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -67,7 +70,7 @@ export function ShopProvider({ children }) {
   };
   const updateProduct = async (id, productData) => {
     try {
-      const response = await fetch(`/api/products/${id}`, {
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -82,7 +85,7 @@ export function ShopProvider({ children }) {
   };
   const deleteProduct = async (id) => {
     try {
-      await fetch(`/api/products/${id}`, {
+      await fetch(`${API_URL}/api/products/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -93,7 +96,7 @@ export function ShopProvider({ children }) {
   };
   const placeOrder = async (user, shippingDetails) => {
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch(`${API_URL}/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -113,7 +116,7 @@ export function ShopProvider({ children }) {
   };
   const sendMessage = async (contactData) => {
     try {
-      await fetch("/api/contact", {
+      await fetch(`${API_URL}/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contactData),
@@ -126,7 +129,7 @@ export function ShopProvider({ children }) {
   };
   const submitInquiry = async (inquiryData) => {
     try {
-      const response = await fetch("/api/configurator-inquiries", {
+      const response = await fetch(`${API_URL}/api/configurator-inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(inquiryData),
@@ -139,7 +142,7 @@ export function ShopProvider({ children }) {
   };
   const addGalleryImages = async (images) => {
     try {
-      const res = await fetch("/api/gallery", {
+      const res = await fetch(`${API_URL}/api/gallery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ images }),
@@ -158,7 +161,7 @@ export function ShopProvider({ children }) {
 
   const reorderGalleryImages = async (updates) => {
     try {
-      const res = await fetch("/api/gallery/reorder", {
+      const res = await fetch(`${API_URL}/api/gallery/reorder", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ updates }),
@@ -177,7 +180,7 @@ export function ShopProvider({ children }) {
 
   const deleteGalleryImage = async (id) => {
     try {
-      const res = await fetch(`/api/gallery/${id}`, {
+      const res = await fetch(`${API_URL}/api/gallery/${id}`, {
         method: "DELETE",
       });
       const data = await res.json();

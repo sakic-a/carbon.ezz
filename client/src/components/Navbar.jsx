@@ -3,7 +3,10 @@ import { ShoppingCart, Menu, X, Globe, LogOut, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import { useShop } from "../context/ShopContext";
+import
+
+const API_URL = import.meta.env.VITE_API_URL || "";
+ { useShop } from "../context/ShopContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,9 +29,9 @@ export default function Navbar() {
         const emailEnc = encodeURIComponent(user.email);
 
         const [ordersRes, messagesRes, configRes] = await Promise.all([
-          fetch(`/api/orders/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
-          fetch(`/api/messages/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
-          fetch(`/api/configurator-inquiries/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
+          fetch(`${API_URL}/api/orders/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
+          fetch(`${API_URL}/api/messages/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
+          fetch(`${API_URL}/api/configurator-inquiries/user/${emailEnc}`, { credentials: "include" }).then((r) => r.ok ? r.json() : []),
         ]);
 
         let totalCount = 0;

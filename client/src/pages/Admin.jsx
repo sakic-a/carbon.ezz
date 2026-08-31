@@ -14,7 +14,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIES } from '../data/categories';
-import { getImageUrl } from '../utils/imageUrl';
+import
+
+const API_URL = import.meta.env.VITE_API_URL || "";
+ { getImageUrl } from '../utils/imageUrl';
 function SortableProductRow({ p, lang, reorderMode, onEdit, onDelete, onToggleStock }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
   const style = {
@@ -163,7 +166,7 @@ export default function Admin() {
         const formData = new FormData();
         formData.append("image", file);
         try {
-            const res = await fetch("/api/upload", {
+            const res = await fetch(`${API_URL}/api/upload", {
                 method: "POST",
                 credentials: "include",
                 body: formData,
@@ -194,7 +197,7 @@ export default function Admin() {
         const formData = new FormData();
         files.forEach((file) => formData.append("gallery", file));
         try {
-            const res = await fetch("/api/upload-gallery", {
+            const res = await fetch(`${API_URL}/api/upload-gallery", {
                 method: "POST",
                 credentials: "include",
                 body: formData,
@@ -218,19 +221,19 @@ export default function Admin() {
             navigate('/login');
             return;
         }
-        fetch('/api/admin/orders', { credentials: "include" })
+        fetch(`${API_URL}/api/admin/orders', { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setOrders(data);
             })
             .catch(err => console.error("Failed to load orders", err));
-        fetch('/api/admin/messages', { credentials: "include" })
+        fetch(`${API_URL}/api/admin/messages', { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setMessages(data);
             })
             .catch(err => console.error("Failed to load messages", err));
-        fetch('/api/admin/configurator-inquiries', { credentials: "include" })
+        fetch(`${API_URL}/api/admin/configurator-inquiries', { credentials: "include" })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setInquiries(data);
@@ -239,7 +242,7 @@ export default function Admin() {
     }, [navigate, user, authLoading]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
-            await fetch(`/api/orders/${orderId}/status`, {
+            await fetch(`${API_URL}/api/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
@@ -323,7 +326,7 @@ export default function Admin() {
 
     const handleSaveReorder = async () => {
         try {
-            const res = await fetch('/api/products/reorder', {
+            const res = await fetch(`${API_URL}/api/products/reorder', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
@@ -374,7 +377,7 @@ export default function Admin() {
     };
     const handleReply = async (msgId, replyText) => {
         try {
-            const res = await fetch(`/api/messages/${msgId}/reply`, {
+            const res = await fetch(`${API_URL}/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
@@ -391,7 +394,7 @@ export default function Admin() {
     const handleDeleteInquiry = async (inquiryId) => {
         if (!window.confirm(t('faq', 'confirmDelete') || "Are you sure you want to delete this inquiry?")) return;
         try {
-            const res = await fetch(`/api/admin/configurator-inquiries/${inquiryId}`, {
+            const res = await fetch(`${API_URL}/api/admin/configurator-inquiries/${inquiryId}`, {
                 method: 'DELETE',
                 credentials: "include",
             });
@@ -405,7 +408,7 @@ export default function Admin() {
     };
     const handleInquiryReply = async (inqId, replyText) => {
         try {
-            const res = await fetch(`/api/admin/configurator-inquiries/${inqId}/reply`, {
+            const res = await fetch(`${API_URL}/api/admin/configurator-inquiries/${inqId}/reply`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
@@ -968,7 +971,7 @@ export default function Admin() {
                                                 try {
                                                     const formData = new FormData();
                                                     files.forEach(f => formData.append('gallery', f));
-                                                    const res = await fetch('/api/upload-gallery', {
+                                                    const res = await fetch(`${API_URL}/api/upload-gallery', {
                                                         method: 'POST',
                                                         headers: {
                                                             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
@@ -1005,7 +1008,7 @@ export default function Admin() {
                                                     try {
                                                         const formData = new FormData();
                                                         files.forEach(f => formData.append('gallery', f));
-                                                        const res = await fetch('/api/upload-gallery', {
+                                                        const res = await fetch(`${API_URL}/api/upload-gallery', {
                                                             method: 'POST',
                                                             headers: {
                                                                 'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
