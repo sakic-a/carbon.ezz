@@ -23,6 +23,7 @@ import UserDashboard from "./pages/UserDashboard";
 import GoogleCallback from "./pages/GoogleCallback";
 import Configurator from "./pages/Configurator";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/common/CookieBanner";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
                   <Route path="/auth/google/callback" element={<GoogleCallback />} />
                   <Route path="/configurator" element={<Configurator />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
               <Footer />
