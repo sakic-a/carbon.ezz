@@ -30,7 +30,7 @@ export default function Gallery() {
               <img
                 src={getImageUrl(image.src)}
                 alt={image.alt || "Gallery Image"}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-10"
                 loading="lazy"
               />
             </div>

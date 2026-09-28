@@ -60,13 +60,15 @@ export default function Login() {
     }
   };
 
+  const API_URL = import.meta.env.VITE_API_URL || "";
+
   const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google";
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   // eslint-disable-next-line no-unused-vars
   const handleFacebookLogin = () => {
-    window.location.href = "/api/auth/facebook";
+    window.location.href = `${API_URL}/api/auth/facebook`;
   };
 
   const labels = {

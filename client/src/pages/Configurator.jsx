@@ -272,6 +272,10 @@ function ConfiguratorContent() {
     }
   }, [location, navigate]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [selectedModel]);
+
   const handleZoneClick = (zone, rect, anchor) => {
     setActiveZone({ zone, rect, anchor });
   };
