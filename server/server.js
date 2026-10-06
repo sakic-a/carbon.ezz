@@ -339,7 +339,7 @@ app.get(
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-    const user = { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role };
+    const user = { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role, token: token };
     res.cookie("token", token, COOKIE_OPTIONS);
     res.redirect(
       `${allowedOrigin}/auth/google/callback?user=${encodeURIComponent(JSON.stringify(user))}`

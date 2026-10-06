@@ -129,6 +129,15 @@ export default function Admin() {
     const [orders, setOrders] = useState([]);
     const [messages, setMessages] = useState([]);
     const [inquiries, setInquiries] = useState([]);
+
+    const fetchWithAuth = async (url, options = {}) => {
+        const token = user?.token;
+        const headers = { ...options.headers };
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        return fetch(url, { ...options, headers, credentials: "include" });
+    };
     const [activeTab, setActiveTab] = useState('orders');
     const [pName, setPName] = useState('');
     const [pNameBs, setPNameBs] = useState('');
@@ -220,31 +229,37 @@ export default function Admin() {
             navigate('/login');
             return;
         }
-        fetch(`${API_URL}/api/admin/orders`, { credentials: "include" })
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setOrders(data);
-            })
-            .catch(err => console.error("Failed to load orders", err));
-        fetch(`${API_URL}/api/admin/messages`, { credentials: "include" })
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setMessages(data);
-            })
-            .catch(err => console.error("Failed to load messages", err));
-        fetch(`${API_URL}/api/admin/configurator-inquiries`, { credentials: "include" })
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setInquiries(data);
-            })
-            .catch(err => console.error("Failed to load configurator inquiries", err));
+        
+        const fetchAdminData = async () => {
+            try {
+                // Fetch individually so one failure doesn't block the others!
+                fetchWithAuth(`${API_URL}/api/admin/orders`)
+                    .then(res => res.json())
+                    .then(data => { if (Array.isArray(data)) setOrders(data); })
+                    .catch(err => console.error(err));
+                    
+                fetchWithAuth(`${API_URL}/api/admin/messages`)
+                    .then(res => res.json())
+                    .then(data => { if (Array.isArray(data)) setMessages(data); })
+                    .catch(err => console.error(err));
+                    
+                fetchWithAuth(`${API_URL}/api/admin/configurator-inquiries`)
+                    .then(res => res.json())
+                    .then(data => { if (Array.isArray(data)) setInquiries(data); })
+                    .catch(err => console.error(err));
+                    
+            } catch (err) {
+                console.error("Failed to load admin data", err);
+            }
+        };
+        
+        fetchAdminData();
     }, [navigate, user, authLoading]);
     const handleStatusUpdate = async (orderId, status) => {
         try {
-            await fetch(`${API_URL}/api/orders/${orderId}/status`, {
+            await fetchWithAuth(`${API_URL}/api/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: "include",
                 body: JSON.stringify({ status })
             });
             setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
@@ -376,10 +391,9 @@ export default function Admin() {
     };
     const handleReply = async (msgId, replyText) => {
         try {
-            const res = await fetch(`${API_URL}/api/messages/${msgId}/reply`, {
+            const res = await fetchWithAuth(`${API_URL}/api/messages/${msgId}/reply`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: "include",
                 body: JSON.stringify({ reply: replyText })
             });
             const data = await res.json();
@@ -407,10 +421,9 @@ export default function Admin() {
     };
     const handleInquiryReply = async (inqId, replyText) => {
         try {
-            const res = await fetch(`${API_URL}/api/admin/configurator-inquiries/${inqId}/reply`, {
+            const res = await fetchWithAuth(`${API_URL}/api/admin/configurator-inquiries/${inqId}/reply`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: "include",
                 body: JSON.stringify({ reply: replyText })
             });
             const data = await res.json();
