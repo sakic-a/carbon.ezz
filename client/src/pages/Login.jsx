@@ -51,7 +51,7 @@ export default function Login() {
         if (!isRegister && result.user?.role === "admin") {
           navigate("/admin");
         } else {
-          const redirectTo = searchParams.get("redirect") || "/shop";
+          const redirectTo = searchParams.get("redirect") || "/dashboard";
           navigate(redirectTo);
         }
       }, 1500);

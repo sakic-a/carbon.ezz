@@ -428,6 +428,30 @@ export default function UserDashboard() {
     setPwLoading(false);
   };
 
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleDeleteProfile = async () => {
+    if (!window.confirm(lang === "bs" ? "Da li ste sigurni da želite obrisati vaš profil? Ova akcija je nepovratna." : "Are you sure you want to delete your profile? This action is irreversible.")) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`${API}/auth/profile`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        logout();
+        navigate("/");
+      } else {
+        const data = await res.json();
+        setDeleteError(data.error || "Failed to delete profile");
+      }
+    } catch {
+      setDeleteError("Failed to delete profile");
+    }
+    setDeleteLoading(false);
+  };
+
   const formatDate = (value) => {
     if (!value) return "—";
     const d = new Date(value);
@@ -922,6 +946,32 @@ export default function UserDashboard() {
                 {pwLoading ? "..." : td("changePw")}
               </button>
             </form>
+          </div>
+        )}
+
+        {activeTab === "password" && (
+          <div className="max-w-md bg-white rounded-xl shadow-sm border border-red-100 p-8 mt-6">
+            <h2 className="text-xl font-extrabold text-black mb-2 flex items-center gap-2">
+              <Trash2 size={20} className="text-red-500" />
+              {lang === "bs" ? "Obriši Profil" : "Delete Profile"}
+            </h2>
+            <p className="text-gray-500 text-sm mb-6">
+              {lang === "bs" 
+                ? "Trajno obrišite vaš korisnički nalog. Ovu akciju nije moguće poništiti." 
+                : "Permanently delete your account and all associated data. This action cannot be undone."}
+            </p>
+            {deleteError && (
+              <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-center gap-2">
+                <AlertCircle size={16} /> {deleteError}
+              </div>
+            )}
+            <button
+              onClick={handleDeleteProfile}
+              disabled={deleteLoading}
+              className="w-full bg-red-50 text-red-600 border border-red-200 py-3 rounded-lg font-bold text-sm hover:bg-red-600 hover:text-white transition-colors disabled:opacity-60"
+            >
+              {deleteLoading ? "..." : (lang === "bs" ? "Obriši Profil" : "Delete Profile")}
+            </button>
           </div>
         )}
 

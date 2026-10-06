@@ -13,7 +13,7 @@ export default function GoogleCallback() {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
         loginWithToken(user);
-        navigate(user.role === "admin" ? "/admin" : "/shop", { replace: true });
+        navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
       } catch {
         navigate("/login", { replace: true });
       }

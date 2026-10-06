@@ -301,6 +301,18 @@ app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
   }
 });
 
+app.delete("/api/auth/profile", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await db.query("DELETE FROM users WHERE id = $1", [userId]);
+    res.clearCookie("token", { httpOnly: true, sameSite: "none", secure: process.env.NODE_ENV === "production" });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete profile error:", err.message);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
+
 app.get(
   "/api/auth/google",
   passport.authenticate("google", {
