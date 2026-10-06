@@ -46,7 +46,7 @@ function PriceInquiryModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      navigate('/login?redirect=/configurator?inquiry=true');
+      navigate(`/login?redirect=${encodeURIComponent('/configurator?inquiry=true')}`);
       return;
     }
     setLoading(true);
