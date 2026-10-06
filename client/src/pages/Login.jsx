@@ -63,11 +63,15 @@ export default function Login() {
   const API_URL = import.meta.env.VITE_API_URL || "";
 
   const handleGoogleLogin = () => {
+    const redirect = searchParams.get("redirect");
+    if (redirect) localStorage.setItem("postLoginRedirect", redirect);
     window.location.href = `${API_URL}/api/auth/google`;
   };
 
   // eslint-disable-next-line no-unused-vars
   const handleFacebookLogin = () => {
+    const redirect = searchParams.get("redirect");
+    if (redirect) localStorage.setItem("postLoginRedirect", redirect);
     window.location.href = `${API_URL}/api/auth/facebook`;
   };
 

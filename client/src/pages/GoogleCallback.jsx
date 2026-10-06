@@ -13,7 +13,13 @@ export default function GoogleCallback() {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
         loginWithToken(user);
-        navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+        const storedRedirect = localStorage.getItem("postLoginRedirect");
+        if (storedRedirect) {
+          localStorage.removeItem("postLoginRedirect");
+          navigate(user.role === "admin" ? "/admin" : storedRedirect, { replace: true });
+        } else {
+          navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+        }
       } catch {
         navigate("/login", { replace: true });
       }
